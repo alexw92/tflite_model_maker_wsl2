@@ -8,8 +8,8 @@ Oh and **dont even think of building python3810 from source! It will fuck everyt
 You can list your conda envs with the command ```conda env list```
 however in the conda env i still got the same error:
 ```UnicodeEncodeError: 'utf-8' codec can't encode character '\udcfc' in position 5: surrogates not allowed```
-*Solution:* This was because by hostname on Windows Saugmühle was translated wrongly to Ubuntu with an invalid character.
-Running ```sudo hostname Saugmuehle``` and restarting wsl fixed it!
+*Solution:* This was because by hostname on Windows which contained a non ASCII character was translated wrongly to Ubuntu with an invalid character.
+Running ```sudo hostname newHostname``` and restarting wsl fixed it!
 
 For GPU Support you need WSL2 and Kernel version higher than ```5.10.16.3-microsoft-standard-WSL2```
 
@@ -76,8 +76,10 @@ model = object_detector.create(train_data, model_spec=spec, batch_size=8, train_
 ```
 Btw: Here on a fresh installed ubuntu22 with python 3816 I got the following error 
 ```UnicodeEncodeError: 'utf-8' codec can't encode character '\udcfc' in position 5: surrogates not allowed```
-*Solution:* This was because by hostname on Windows Saugmühle was translated wrongly to Ubuntu with an invalid character.
-Running ```sudo hostname Saugmuehle``` and restarting wsl fixed it!
+*Solution:* This was because the Hostname on Windows which contained ASCII characteres was translated wrongly to Ubuntu with an invalid character.
+Running ```sudo hostname NewHostName``` and restarting wsl fixed it!
+
+Dont forget to update your ```/etc/hosts``` file
 
 It trained fine for a while but then failed because of 
 
