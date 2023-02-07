@@ -4,12 +4,11 @@ This shows how to set up tflite model maker on WSL2
 ## Redo it in new env (works!)
 0.) You need python38 for doing this!
 Oh and **dont even think of building python3810 from source! It will fuck everything up!**
+
 **better: create conda env with python3.8.10**
+
 You can list your conda envs with the command ```conda env list```
-however in the conda env i still got the same error:
-```UnicodeEncodeError: 'utf-8' codec can't encode character '\udcfc' in position 5: surrogates not allowed```
-*Solution:* This was because by hostname on Windows Saugmühle was translated wrongly to Ubuntu with an invalid character.
-Running ```sudo hostname Saugmuehle``` and restarting wsl fixed it!
+
 
 For GPU Support you need WSL2 and Kernel version higher than ```5.10.16.3-microsoft-standard-WSL2```
 
@@ -74,10 +73,40 @@ train_data, validation_data, test_data = object_detector.DataLoader.from_csv('gs
 ```python
 model = object_detector.create(train_data, model_spec=spec, batch_size=8, train_whole_model=True, validation_data=validation_data)
 ```
-Btw: Here on a fresh installed ubuntu22 with python 3816 I got the following error 
+
+Btw: Here on a fresh installed ubuntu22 with **WSL2** I got the following error 
 ```UnicodeEncodeError: 'utf-8' codec can't encode character '\udcfc' in position 5: surrogates not allowed```
-*Solution:* This was because by hostname on Windows Saugmühle was translated wrongly to Ubuntu with an invalid character.
-Running ```sudo hostname Saugmuehle``` and restarting wsl fixed it!
+
+*Solution:* This was because the hostname on Windows which contained non-ASCII characters was translated wrongly to Ubuntu with an invalid character.
+
+Running ```sudo hostname NewHostName``` and restarting wsl fixed it!
+
+To persist this create a startup script
+
+```bash
+sudo nano /etc/init.d/hostname
+```
+
+With these lines
+
+```bash
+#!/bin/sh
+sudo hostname NewHostName
+```
+
+Make it executable
+
+```bash
+sudo chmod +x /etc/init.d/hostname
+
+```
+
+Update the startup script by running the following command:
+
+```bash
+sudo update-rc.d hostname defaults
+```
+
 
 It trained fine for a while but then failed because of 
 
@@ -285,7 +314,7 @@ ERROR: scann 1.2.6 has requirement tensorflow~=2.8.0, but you'll have tensorflow
 ERROR: tensorflowjs 3.18.0 has requirement packaging~=20.9, but you'll have packaging 23.0 which is incompatible.
 ```
 
-# Another aproach
+# Another aproach (legacy)
 Permission errors seem to be WSL related because I was in NTFS file system managed by windows
 Tried this inside (WSL) ```/home/alex``` inside a venv (model_maker_venv)
 
@@ -330,145 +359,3 @@ pip uninstall -y tensorflow && pip install -q tensorflow==2.8.0 # didnt do this
 This way seems to install model maker locally so I switched into
 the src dir and invoked python3 and tried to import model-maker but I resulted in error
 that tensorflowjs was missing so maybe this wasnt installed correctly.
-
-## Redo it in new env (works!)
-0.) You need python38 for doing this!
-Oh and **dont even think of building python3810 from source! It will fuck everything up!**
-**better: create conda env with python3.8.10**
-You can list your conda envs with the command ```conda env list```
-however in the conda env i still got the same error:
-```UnicodeEncodeError: 'utf-8' codec can't encode character '\udcfc' in position 5: surrogates not allowed```
-*Solution:* This was because by hostname on Windows Saugmühle was translated wrongly to Ubuntu with an invalid character.
-Running ```sudo hostname Saugmuehle``` and restarting wsl fixed it!
-
-For GPU Support you need WSL2 and Kernel version higher than ```5.10.16.3-microsoft-standard-WSL2```
-
-Tried with 
-
-```
-sudo cat /proc/version
-Linux version 5.15.79.1-microsoft-standard-WSL2 
-```
-
-and now nvidia-smi works!
-
-**Update: Maybe this is an error with the encoding of this new wsl**
-But echo $LANG is
-C.UTF-8 on both ubuntu20 and ubuntu22
-
-1.) Because it was not installed correctly I created a new venv **model_maker_venv2**
-and installed tensorflow==2.8.4 and packaging==20.9 inside it
-
-then I cloned the repo and installed it
-
-```
-git clone https://github.com/tensorflow/examples
-cd examples/tensorflow_examples/lite/model_maker/pip_package
-pip install -e .
-```
-
-2.) It seems to be installed now
-
-```bash
-pip list
-tflite-model-maker            0.4.2     /home/alex/examples/tensorflow_examples/lite/model_maker/pip_package/src
-
-```
-2.1) I got an error importing something in modelmaker so I downgraded numpy to 1.23
-Then I continued with [this](https://www.tensorflow.org/lite/models/modify/model_maker/object_detection)
-
-```python
-import numpy as np
-import os
-
-from tflite_model_maker.config import QuantizationConfig
-from tflite_model_maker.config import ExportFormat
-from tflite_model_maker import model_spec
-from tflite_model_maker import object_detector
-
-import tensorflow as tf
-assert tf.__version__.startswith('2')
-
-tf.get_logger().setLevel('ERROR')
-from absl import logging
-logging.set_verbosity(logging.ERROR)
-```
-
-```python
-spec = model_spec.get('efficientdet_lite0')
-```
-
-3.) The following results in an error making be think it could not load the data from the gcs bucket
-```python
-train_data, validation_data, test_data = object_detector.DataLoader.from_csv('gs://cloud-ml-data/img/openimage/csv/salads_ml_use.csv')
-```
-
-4.) But then running this seems to train correctly (currently on cpu only I think, cuda11 could not be found)
-```python
-model = object_detector.create(train_data, model_spec=spec, batch_size=8, train_whole_model=True, validation_data=validation_data)
-```
-Btw: Here on a fresh installed ubuntu22 with python 3816 I got the following error 
-```UnicodeEncodeError: 'utf-8' codec can't encode character '\udcfc' in position 5: surrogates not allowed```
-*Solution:* This was because by hostname on Windows Saugmühle was translated wrongly to Ubuntu with an invalid character.
-Running ```sudo hostname Saugmuehle``` and restarting wsl fixed it!
-
-It trained fine for a while but then failed because of 
-
-```
-ImportError: You must install pycocotools (`pip install pycocotools`) (see github repo at https://github.com/cocodataset/cocoapi) for efficientdet/coco_metric to work.
-```
-
-4.1) so I installed it and also installed the next required module:
-
-```bash
-pip install -q pycocotools
-pip install -q opencv-python-headless==4.1.2.30
-```
-
-In case pycocotools installation throws an error you might need to install these
-
-```bash
-sudo apt-get install libpq-dev python3.8-dev libxml2-dev libxslt1-dev libldap2-dev libsasl2-dev libffi-dev libjpeg-dev zlib1g-dev
-sudo apt-get install build-essential
-```
-
-then I run the code again and restarted training
-
-```python
-spec = model_spec.get('efficientdet_lite0')
-```
-
-It worked!
-
-5.) Then I ran eval
-
-```python
-model.evaluate(test_data)
-```
-
-6.) worked also and then I exported the model
-
-```python
-model.export(export_dir='.')
-```
-
-Worked and resulted in:
-
-```json
-{'AP': 0.20119594, 'AP50': 0.34621373, 'AP75': 0.21721725, 'APs': -1.0, 'APm': 0.5330238, 'APl': 0.19910036, 'ARmax1': 0.17052028, 'ARmax10': 0.34225824, 'ARmax100': 0.39623663, 'ARs': -1.0, 'ARm': 0.7, 'ARl': 0.39222324, 'AP_/Baked Goods': 0.025994863, 'AP_/Salad': 0.5475503, 'AP_/Cheese': 0.19085687, 'AP_/Seafood': 0.021515297, 'AP_/Tomato': 0.22006239}
-```
-
-7.) Then I loaded the just exported tflite model to perform evaluation:
-
-```python
-model.evaluate_tflite('model.tflite', test_data)
-```
-
-worked as well!
-
-```json
-{'AP': 0.1789487, 'AP50': 0.31319344, 'AP75': 0.1972646, 'APs': -1.0, 'APm': 0.559314, 'APl': 0.17661628, 'ARmax1': 0.13116644, 'ARmax10': 0.24777183, 'ARmax100': 0.26256573, 'ARs': -1.0, 'ARm': 0.64166665, 'ARl': 0.25821817, 'AP_/Baked Goods': 0.0, 'AP_/Salad': 0.5157693, 'AP_/Cheese': 0.17967021, 'AP_/Seafood': 0.0006441821, 'AP_/Tomato': 0.19865985}
-```
-
-
-
