@@ -9,7 +9,6 @@ Oh and **dont even think of building python3810 from source! It will fuck everyt
 
 You can list your conda envs with the command ```conda env list```
 
-
 For GPU Support you need WSL2 and Kernel version higher than ```5.10.16.3-microsoft-standard-WSL2```
 
 Tried with 
@@ -22,7 +21,7 @@ Linux version 5.15.79.1-microsoft-standard-WSL2
 and now nvidia-smi works!
 
 
-1.) Because it was not installed correctly I created a new venv **model_maker_venv2**
+1.) Because it was not installed correctly I created a conda env **conda_env**
 and installed tensorflow==2.8.4 and packaging==20.9 inside it
 
 then I cloned the repo and installed it
@@ -77,6 +76,7 @@ model = object_detector.create(train_data, model_spec=spec, batch_size=8, train_
 Btw: Here on a fresh installed ubuntu22 with **WSL2** I got the following error 
 ```UnicodeEncodeError: 'utf-8' codec can't encode character '\udcfc' in position 5: surrogates not allowed```
 
+
 *Solution:* This was because the hostname on Windows which contained non-ASCII characters was translated wrongly to Ubuntu with an invalid character.
 
 Running ```sudo hostname NewHostName``` and restarting wsl fixed it!
@@ -106,7 +106,6 @@ Update the startup script by running the following command:
 ```bash
 sudo update-rc.d hostname defaults
 ```
-
 
 It trained fine for a while but then failed because of 
 
