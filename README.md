@@ -23,7 +23,7 @@ Linux version 5.15.79.1-microsoft-standard-WSL2
 and now nvidia-smi works!
 
 
-1.) Because it was not installed correctly I created a new venv **model_maker_venv2**
+1.) Because it was not installed correctly I created a conda env **conda_env**
 and installed tensorflow==2.8.4 and packaging==20.9 inside it
 
 then I cloned the repo and installed it
