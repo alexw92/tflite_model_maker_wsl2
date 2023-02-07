@@ -68,6 +68,11 @@ spec = model_spec.get('efficientdet_lite0')
 train_data, validation_data, test_data = object_detector.DataLoader.from_csv('gs://cloud-ml-data/img/openimage/csv/salads_ml_use.csv')
 ```
 
+Or if you have already downloaded the images using the python script use just your generated csv and save time
+```python
+train_data, validation_data, test_data = object_detector.DataLoader.from_csv('output.csv')
+```
+
 4.) But then running this seems to train correctly (currently on cpu only I think, cuda11 could not be found)
 ```python
 model = object_detector.create(train_data, model_spec=spec, batch_size=8, train_whole_model=True, validation_data=validation_data)
