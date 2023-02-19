@@ -11,6 +11,14 @@ You can list your conda envs with the command ```conda env list```
 
 For GPU Support you need WSL2 and Kernel version higher than ```5.10.16.3-microsoft-standard-WSL2```
 
+Set the default version of WSL to WSL2 by doing this:
+
+```
+wsl --set-default-version 2
+```
+
+Then install ubuntu.
+
 Tried with 
 
 ```
