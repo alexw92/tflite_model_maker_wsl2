@@ -240,6 +240,28 @@ export PATH=$PATH:$CUDA_HOME/bin
 
 Now the training should work! :)
 
+# Create own dataset
+
+1. Load and install Label Studio
+
+```
+pip install label-studio
+label-studio start
+```
+
+Then go to ```http://localhost:8080/```, create a project, upload data and 
+label it 
+
+2. Export the labels to Pascal VOC XML
+
+3. Then use the script  ```convert_pascal_to_googlecsv.py``` to convert the xmls
+into the Google OD csv format.
+
+4. Assign labels for TRAIN, TEST, VAL
+
+5. Start training on your dataset! :)
+
+
 # Tried on windows (legacy)
 ```bash
 (model_maker_venv) (base) PS Z:\IdeaRepos\model_maker_od> pip install -q --use-deprecated=legacy-resolver tflite-model-maker
