@@ -267,7 +267,12 @@ into the Google OD csv format.
 
 4. Assign labels for TRAIN, TEST, VAL
 
-5. Start training on your dataset! :)
+5. Dont forget to check your dataset labels. Each label should have more than 100 occurences in test images!
+You can use the ```get_label_stats.py``` script in this repo to check this.
+
+6. Start training on your dataset! :)
+
+
 
 
 # Tried on windows (legacy)
