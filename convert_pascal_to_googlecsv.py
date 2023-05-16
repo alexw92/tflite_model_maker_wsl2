@@ -18,11 +18,16 @@ def pascal_voc_to_mlflow_csv(pascal_voc_file, mlflow_csv_file):
 
         width = int(root.find('size').find('width').text)
         height = int(root.find('size').find('height').text)
-
+        
+        parent_dir = os.path.dirname(os.path.dirname(pascal_voc_file))
+        images_dir_name = root.find('folder').text
+        image_path = os.path.join(parent_dir, images_dir_name, root.find('filename').text)
+        
         with open(mlflow_csv_file, 'a', newline='') as mlflow_csv:
             writer = csv.writer(mlflow_csv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             if os.path.getsize(mlflow_csv_file) == 0:
                 writer.writerow(['path', 'label', 'x_min', 'y_min', '', '', 'x_max', 'y_max', '', ''])
+
 
             for obj in root.findall('object'):
                 bbox = obj.find('bndbox')
@@ -31,7 +36,7 @@ def pascal_voc_to_mlflow_csv(pascal_voc_file, mlflow_csv_file):
                 x_max = round(float(bbox.find('xmax').text) / width, 6)
                 y_max = round(float(bbox.find('ymax').text) / height, 6)
                 writer.writerow([
-                    os.path.join(os.path.dirname(pascal_voc_file), root.find('filename').text),
+                    os.path.join(parent_dir, images_dir_name, root.find('filename').text),
                     obj.find('name').text,
                     x_min,
                     y_min,
