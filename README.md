@@ -1,6 +1,104 @@
 # tflite_model_maker_wsl2
 This shows how to set up tflite model maker on WSL2
 
+## Training Baseline
+
++ Create and label dataset with Label Studio (Needed to use Firefox bc of Request Stalling)
++ Download dataset in PascalVoc Format
++ Extract archive then convert to MLFlow format and perform dataset split
+
+```bash
+> python .\convert_pascal_to_googlecsv.py project-1-at-2023-05-16-11-39-d4943046\Annotations\
+Merged CSV file saved as merged_annotations_mlflow.csv
+Create train-test-validation split? (y/n): y
+Enter the proportion for train set (0 to 1): 0.8
+Enter the proportion for test set (0 to 1): 0.1
+Enter the proportion for validation set (0 to 1): 0.1
+Train-test-validation split applied to merged_annotations_mlflow.csv
+```
++ Convert all pngs to jpegs
+
+```bash
+> python png_to_jpeg.py merged_annotations_mlflow.csv
+```
++ Optionally check your dataset stats
+
+```bash
+> python get_label_stats.py merged_annotations_mlflow.csv
+```
+
++ If you havent already open WSL
++ Activate the env to your model maker installation
+
+```bash
+conda activate conda_env
+```
++ Load the pretrained model
+
+```python
+import numpy as np
+import os
+
+from tflite_model_maker.config import QuantizationConfig
+from tflite_model_maker.config import ExportFormat
+from tflite_model_maker import model_spec
+from tflite_model_maker import object_detector
+
+import tensorflow as tf
+assert tf.__version__.startswith('2')
+
+tf.get_logger().setLevel('ERROR')
+from absl import logging
+logging.set_verbosity(logging.ERROR)
+
+spec = model_spec.get('efficientdet_lite0')
+```
++ Load the dataset
+
+```python
+train_data, validation_data, test_data = object_detector.DataLoader.from_csv('merged_annotations_mlflow.csv')
+```
++ Train the model
+
+```python
+model = object_detector.create(train_data, model_spec=spec, batch_size=8, train_whole_model=True, validation_data=validation_data)
+```
++ Run on test data
+
+```python
+model.evaluate(test_data)
+```
++ Export the model to tflite model
+
+```python
+model.export(export_dir='new_model')
+```
++ Add the desired classed to inference script
+
+```python
+label_map = {
+    1: 'rice',2: 'carrot',3: 'strawberry',4: 'potato',
+    5: 'grape',6: 'kidney bean',7: 'butter',8: 'water melon',
+    9: 'tofu',10: 'lentil',11: 'sweet potato',12: 'chickpea',
+    13: 'cherry',14: 'chilli',15: 'avocado',16: 'raspberry',
+    17: 'zucchini',18: 'pear',19: 'brocoli',20: 'tomato',
+    21: 'mango',22: 'onion',23: 'garlic',24: 'apple',
+    25: 'coucous',26: 'quinoa',27: 'cucumber',28: 'lemon',
+    29: 'ananas',30: 'plum',31: 'cantaloupe',32: 'califlower',
+    33: 'kiwi',34: 'black bean',35: 'green bean',36: 'bell pepper',
+    37: 'banana',38: 'spinach',39: 'blackberry',40: 'blueberry',
+    41: 'orange',42: 'mushroom'
+}
+num_classes = 42
+```
++ Run inference script for visual output
+
+```bash
+python do_inference.py --input_img project-1-at-2023-05-16-11-39-d4943046/images/f2df3e66-00321.jpeg\
+                       --model_url /home/alex/new_model/model.tflite
+```
+
+
 ## Redo it in new env (works!)
 0.) You need python38 for doing this!
 Oh and **dont even think of building python3810 from source! It will fuck everything up!**
