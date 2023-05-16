@@ -2,6 +2,7 @@ import argparse
 import csv
 import os
 import xml.etree.ElementTree as ET
+import random
 
 def pascal_voc_to_mlflow_csv(pascal_voc_file, mlflow_csv_file):
     """
@@ -41,6 +42,95 @@ def pascal_voc_to_mlflow_csv(pascal_voc_file, mlflow_csv_file):
                     '',
                     ''
                 ])
+def merge_csv_files(file_list, output_file_name):
+    output_folder = os.path.dirname(file_list[0])
+    output_file_path = os.path.join(output_folder, output_file_name)
+    
+    with open(output_file_path, 'w', newline='') as output_file:
+        writer = csv.writer(output_file)
+        
+        # Write the header from the first file
+        with open(file_list[0], 'r') as first_file:
+            reader = csv.reader(first_file)
+            header = next(reader)
+            writer.writerow(header)
+        
+        # Write the data from all files
+        for file_name in file_list:
+            with open(file_name, 'r') as input_file:
+                reader = csv.reader(input_file)
+                next(reader)  # Skip the header row
+                for row in reader:
+                    writer.writerow(row)
+            os.remove(file_name)        
+    
+    print(f"Merged CSV file saved as {output_file_path}")
+
+def create_train_test_val_split(merged_file_path):
+    # Read the merged CSV file and group annotations by file
+    file_data = {}
+    with open(merged_file_path, 'r') as merged_file:
+        reader = csv.reader(merged_file)
+        header = next(reader)
+        for row in reader:
+            file_name = row[0]
+            if file_name not in file_data:
+                file_data[file_name] = []
+            file_data[file_name].append(row)
+    
+    # Shuffle the file names
+    file_names = list(file_data.keys())
+    random.shuffle(file_names)
+    
+    # Prompt user for train-test-validation split
+    create_split = input("Create train-test-validation split? (y/n): ")
+    if create_split.lower() in ['y', 'yes']:
+        proportions_valid = False
+        while not proportions_valid:
+            train_proportion = float(input("Enter the proportion for train set (0 to 1): "))
+            test_proportion = float(input("Enter the proportion for test set (0 to 1): "))
+            val_proportion = float(input("Enter the proportion for validation set (0 to 1): "))
+            
+            if train_proportion + test_proportion + val_proportion != 1:
+                print("Error: The sum of proportions must be equal to 1.")
+            else:
+                proportions_valid = True
+        
+        # Calculate split indices
+        num_files = len(file_names)
+        train_split_index = int(num_files * train_proportion)
+        test_split_index = train_split_index + int(num_files * test_proportion)
+        
+        # Assign splits
+        for i, file_name in enumerate(file_names):
+            if i < train_split_index:
+                split = 'TRAIN'
+            elif i < test_split_index:
+                split = 'TEST'
+            else:
+                split = 'VALIDATE'
+            
+            # Update the 'Split' column for each annotation of the file
+            for row in file_data[file_name]:
+                row.insert(0, split)
+    
+        # Write the split data to the merged CSV file
+        with open(merged_file_path, 'w', newline='') as merged_file:
+            writer = csv.writer(merged_file)
+            writer.writerow(header)
+            for file_name in file_names:
+                for row in file_data[file_name]:
+                    writer.writerow(row)
+                    
+    # Delete the first line (header) from the merged CSV file
+    with open(merged_file_path, 'r') as file:
+        lines = file.readlines()[1:]
+    
+    with open(merged_file_path, 'w', newline='') as file:
+        file.writelines(lines)                   
+        
+        print(f"Train-test-validation split applied to {merged_file_path}")
+    
 
 def main(directory):
     """
@@ -49,11 +139,16 @@ def main(directory):
     Parameters:
     directory (str): Path to the directory containing the Pascal VOC files to convert.
     """
-    mlflow_csv_file = os.path.join(directory, 'mlflow_csv.csv')
+    file_list = []
     for file in os.listdir(directory):
         if file.endswith('.xml'):
+            output_file = os.path.splitext(file)[0] + '_mlflow.csv'
             pascal_voc_file = os.path.join(directory, file)
-            pascal_voc_to_mlflow_csv(pascal_voc_file, mlflow_csv_file)
+            file_list.append(output_file)
+            pascal_voc_to_mlflow_csv(pascal_voc_file, output_file)
+    output_file_name = 'merged_annotations_mlflow.csv'
+    merge_csv_files(file_list, output_file_name)
+    create_train_test_val_split(output_file_name)    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Converts Pascal VOC files to MLFlow CSV format')
