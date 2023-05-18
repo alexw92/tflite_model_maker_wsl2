@@ -218,7 +218,7 @@ def main(args):
     input_csv = args.input_csv
     model_path = args.model_url
     detection_threshold = args.threshold
-    output_dir = "/home/alex/predictions"
+    output_dir = args.output_dir
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -274,5 +274,6 @@ if __name__ == '__main__':
     parser.add_argument('--model_url', type=str, help='The path to your tf-lite model', default='model.tflite')
     parser.add_argument('--threshold', type=int, help='Detection_threshold', default=0.3)
     parser.add_argument('--input_csv', type=str, help='CSV file containing file paths and splits', default='input.csv')
+    parser.add_argument('--output_dir', type=str, help='Output dir to save predictions to', default='/home/alex/predictions')
     args = parser.parse_args()
     main(args)
