@@ -1,28 +1,37 @@
 import csv
 from PIL import Image
 import os
+import sys
+from tqdm import tqdm
 
 def convert_files_to_jpeg(csv_file):
+    converted_files = []
+    ignored_files = []
+    ignored_not_found_files = []
     with open(csv_file, 'r') as file:
         reader = csv.reader(file)
         converted_rows = []
 
-        for row in reader:
+        for row in tqdm(reader):
             file_path = row[1]  # Assuming the file path is in the second column
 
             if os.path.isfile(file_path):
                 file_name, file_ext = os.path.splitext(file_path)
                 if file_ext.lower() == ".png":
                     jpeg_file_path = file_name + ".jpeg"
-                    convert_png_to_jpeg(file_path, jpeg_file_path)
-                    print(f"Converted {file_path} to {jpeg_file_path}")
+                    if file_name not in converted_files:
+                        convert_png_to_jpeg(file_path, jpeg_file_path)
+                        converted_files.append(file_name)
                     row[1] = jpeg_file_path  # Update the file path in the CSV row
                 else:
-                    print(f"Ignored {file_path}: Not a PNG file")
+                    ignored_files.append(file_path)
             else:
-                print(f"Ignored {file_path}: File does not exist")
+                ignored_not_found_files.append(file_path)
 
             converted_rows.append(row)
+    print(f"Converted {len(converted_files)}")    
+    print(f"Ignored {len(ignored_files)} files because: Not a PNG file")
+    print(f"Ignored {len(ignored_not_found_files)} files because: Not found")  
 
     # Write the updated CSV file
     with open(csv_file, 'w', newline='') as file:
@@ -41,3 +50,4 @@ if __name__ == '__main__':
     else:
         csv_file = sys.argv[1]
     convert_files_to_jpeg(csv_file)
+    
