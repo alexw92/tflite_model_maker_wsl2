@@ -98,6 +98,29 @@ python do_inference.py --input_img project-1-at-2023-05-16-11-39-d4943046/images
                        --model_url /home/alex/new_model/model.tflite
 ```
 
++ **Update:** The inference script accepts now the previously generated csv file as param and performs inference on all images on the test set!
+
+```bash
+python do_inference.py --input_csv /mnt/z/IdeaRepos/tflite_model_maker_wsl2/merged_annotations_mlflow.csv\  
+ --model_url model_c49_180523/model.tflite --output_dir /home/alex/predictions1
+```
+
+## Train with checkpoints
+
+In order to run with checkpoints and check training progress with tensorboard do this
+
+```bash
+python train_od.py
+```
+
+In a new command line open tensorboard at the checkpoint directory
+
+```
+conda activate conda_env
+tensorboard serve --logdir .
+```
+
+Now you should be able to visualize train and val loss during training :)
 
 ## Installation
 0.) You need python38 for doing this!
