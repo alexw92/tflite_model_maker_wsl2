@@ -54,9 +54,16 @@ label_map = {
     39: 'blackberry',
     40: 'blueberry',
     41: 'orange',
-    42: 'mushroom'
+    42: 'mushroom',
+    43: 'basil',
+    44: 'parsley',
+    45: 'egg',
+    46: 'ginger',
+    47: 'lime',
+    48: 'pumpkin',
+    49: 'cheese'
 }
-num_classes = 42
+num_classes = 49
 
 # Load the labels into a list
 classes = ['???'] * num_classes
@@ -192,7 +199,14 @@ def main(args):
     39: 'blackberry',
     40: 'blueberry',
     41: 'orange',
-    42: 'mushroom'
+    42: 'mushroom',
+    43: 'basil',
+    44: 'parsley',
+    45: 'egg',
+    46: 'ginger',
+    47: 'lime',
+    48: 'pumpkin',
+    49: 'cheese'
 }
   
   im = Image.open(TEMP_FILE)
