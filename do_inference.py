@@ -4,6 +4,8 @@ from pathlib import Path
 from PIL import Image
 import numpy as np
 import os
+import csv
+from tqdm import tqdm
 
 from tflite_model_maker.config import QuantizationConfig
 from tflite_model_maker.config import ExportFormat
@@ -151,91 +153,126 @@ def run_odt_and_draw_results(image_path, interpreter, threshold=0.5):
   original_uint8 = original_image_np.astype(np.uint8)
   return original_uint8
   
+def load_labels():
+    label_map = {
+        1: 'rice',
+        2: 'carrot',
+        3: 'strawberry',
+        4: 'potato',
+        5: 'grape',
+        6: 'kidney bean',
+        7: 'butter',
+        8: 'water melon',
+        9: 'tofu',
+        10: 'lentil',
+        11: 'sweet potato',
+        12: 'chickpea',
+        13: 'cherry',
+        14: 'chilli',
+        15: 'avocado',
+        16: 'raspberry',
+        17: 'zucchini',
+        18: 'pear',
+        19: 'brocoli',
+        20: 'tomato',
+        21: 'mango',
+        22: 'onion',
+        23: 'garlic',
+        24: 'apple',
+        25: 'coucous',
+        26: 'quinoa',
+        27: 'cucumber',
+        28: 'lemon',
+        29: 'ananas',
+        30: 'plum',
+        31: 'cantaloupe',
+        32: 'califlower',
+        33: 'kiwi',
+        34: 'black bean',
+        35: 'green bean',
+        36: 'bell pepper',
+        37: 'banana',
+        38: 'spinach',
+        39: 'blackberry',
+        40: 'blueberry',
+        41: 'orange',
+        42: 'mushroom',
+        43: 'basil',
+        44: 'parsley',
+        45: 'egg',
+        46: 'ginger',
+        47: 'lime',
+        48: 'pumpkin',
+        49: 'cheese'
+    }
+    return label_map  
+
+def convert_to_png(file_path):
+    im = Image.open(file_path)
+    im.thumbnail((512, 512), Image.ANTIALIAS)
+    png_file_path = file_path.replace('.jpg', '.png')
+    im.save(png_file_path, 'PNG')
+    return png_file_path  
 
 def main(args):
-  TEMP_FILE = args.input_img
-  model_path = args.model_url
-  DETECTION_THRESHOLD = args.threshold
-  output_img = args.output_img
-  label_map = {
-    1: 'rice',
-    2: 'carrot',
-    3: 'strawberry',
-    4: 'potato',
-    5: 'grape',
-    6: 'kidney bean',
-    7: 'butter',
-    8: 'water melon',
-    9: 'tofu',
-    10: 'lentil',
-    11: 'sweet potato',
-    12: 'chickpea',
-    13: 'cherry',
-    14: 'chilli',
-    15: 'avocado',
-    16: 'raspberry',
-    17: 'zucchini',
-    18: 'pear',
-    19: 'brocoli',
-    20: 'tomato',
-    21: 'mango',
-    22: 'onion',
-    23: 'garlic',
-    24: 'apple',
-    25: 'coucous',
-    26: 'quinoa',
-    27: 'cucumber',
-    28: 'lemon',
-    29: 'ananas',
-    30: 'plum',
-    31: 'cantaloupe',
-    32: 'califlower',
-    33: 'kiwi',
-    34: 'black bean',
-    35: 'green bean',
-    36: 'bell pepper',
-    37: 'banana',
-    38: 'spinach',
-    39: 'blackberry',
-    40: 'blueberry',
-    41: 'orange',
-    42: 'mushroom',
-    43: 'basil',
-    44: 'parsley',
-    45: 'egg',
-    46: 'ginger',
-    47: 'lime',
-    48: 'pumpkin',
-    49: 'cheese'
-}
-  
-  im = Image.open(TEMP_FILE)
-  im.thumbnail((512, 512), Image.ANTIALIAS)
-  im.save(TEMP_FILE, 'PNG')
-  # Load the TFLite model
-  interpreter = tf.lite.Interpreter(model_path=model_path)
-  interpreter.allocate_tensors()
-  # Run inference and draw detection result on the local copy of the original file
-  detection_result_image = run_odt_and_draw_results(
-      TEMP_FILE,
-      interpreter,
-      threshold=DETECTION_THRESHOLD
-  )
-  # Show the detection result
-  img = Image.fromarray(detection_result_image)
-  if output_img is '':
-    save_url = '/home/alex/result_'+Path(TEMP_FILE).name
-  else:
-    save_url = output_img  
-  img.save(save_url, 'PNG')
-  print('prediction saved to '+save_url)
+    input_csv = args.input_csv
+    model_path = args.model_url
+    detection_threshold = args.threshold
+    output_dir = "/home/alex/predictions"
 
+    os.makedirs(output_dir, exist_ok=True)
+
+    label_map = load_labels()
+
+    test_files = set()
+
+    with open(input_csv, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            split = row[0]
+            file_path = row[1]
+
+            if split == "TEST":
+                test_files.add(file_path)
+
+    # Load the TFLite model
+    interpreter = tf.lite.Interpreter(model_path=model_path)
+    interpreter.allocate_tensors()
+
+    for file_path in tqdm(test_files):
+        if not os.path.isfile(file_path):
+            print(f"Ignored {file_path}: File does not exist")
+            continue
+
+        file_name, file_ext = os.path.splitext(file_path)
+
+        if file_ext.lower() != ".jpg" and file_ext.lower() != ".jpeg":
+            print(f"Ignored {file_path}: Not a JPG file")
+            continue
+
+        try:
+            png_file_path = convert_to_png(file_path)
+
+            # Run inference and draw detection result on the local copy of the original file
+            detection_result_image = run_odt_and_draw_results(
+                png_file_path,
+                interpreter,
+                threshold=detection_threshold
+            )
+
+            # Save the prediction image
+            save_url = os.path.join(output_dir, f"prediction_{Path(file_path).name}")
+            img = Image.fromarray(detection_result_image)
+            img.save(save_url, 'PNG')
+            print(f"Prediction saved to {save_url}")
+        except Exception as e:
+            print(f"Error processing {file_path}: {str(e)}")
+            
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run inference for object detection tf lite model')
     parser.add_argument('--model_url', type=str, help='The path to your tf-lite model', default='model.tflite')
     parser.add_argument('--threshold', type=int, help='Detection_threshold', default=0.3)
-    parser.add_argument('--input_img', type=str, help='Image to feed to the model', default='')
-    parser.add_argument('--output_img', type=str, help='Where the output image is stored', default='')
+    parser.add_argument('--input_csv', type=str, help='CSV file containing file paths and splits', default='input.csv')
     args = parser.parse_args()
     main(args)
