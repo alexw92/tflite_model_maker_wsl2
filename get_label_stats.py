@@ -39,11 +39,11 @@ def get_label_stats(input_file):
         total_files = len(all_files)
         print(f"\n{split}:")
         for label, count in label_counts.items():
-            percentage = round(count / total_files * 100, 2)
+            percentage = round(count / sum(label_counts.values()) * 100, 2)
             print(f"{label}: {count} files ({percentage}%)")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Converts Pascal VOC files to MLFlow CSV format')
+    parser = argparse.ArgumentParser(description='Gets label occurences for dataset')
     parser.add_argument('file', nargs='?', type=str, help='csv file with Google ML format to investigate stats for', default='salads_ml_use.csv')
     args = parser.parse_args()
     get_label_stats(args.file)
