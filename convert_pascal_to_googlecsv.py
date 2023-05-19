@@ -92,15 +92,30 @@ def create_train_test_val_split(merged_file_path):
     if create_split.lower() in ['y', 'yes']:
         proportions_valid = False
         while not proportions_valid:
-            train_proportion = float(input("Enter the proportion for train set (0 to 1): "))
-            test_proportion = float(input("Enter the proportion for test set (0 to 1): "))
-            val_proportion = float(input("Enter the proportion for validation set (0 to 1): "))
+            train_proportion = input("Enter the proportion for train set (0 to 1, default 0.8): ")
+            test_proportion = input("Enter the proportion for test set (0 to 1, default 0.1): ")
+            val_proportion = input("Enter the proportion for validation set (0 to 1, default 0.1): ")
+            
+            if train_proportion == '':
+                train_proportion = 0.8
+            else:
+                train_proportion = float(train_proportion)
+            
+            if test_proportion == '':
+                test_proportion = 0.1
+            else:
+                test_proportion = float(test_proportion)
+            
+            if val_proportion == '':
+                val_proportion = 0.1
+            else:
+                val_proportion = float(val_proportion)
             
             if train_proportion + test_proportion + val_proportion != 1:
                 print("Error: The sum of proportions must be equal to 1.")
             else:
                 proportions_valid = True
-        
+                
         # Calculate split indices
         num_files = len(file_names)
         train_split_index = int(num_files * train_proportion)
@@ -137,26 +152,70 @@ def create_train_test_val_split(merged_file_path):
         print(f"Train-test-validation split applied to {merged_file_path}")
     
 
-def main(directory):
-    """
-    Converts all Pascal VOC files in the given directory to a single MLFlow CSV file.
 
-    Parameters:
-    directory (str): Path to the directory containing the Pascal VOC files to convert.
-    """
-    file_list = []
-    for file in os.listdir(directory):
-        if file.endswith('.xml'):
-            output_file = os.path.splitext(file)[0] + '_mlflow.csv'
-            pascal_voc_file = os.path.join(directory, file)
-            file_list.append(output_file)
-            pascal_voc_to_mlflow_csv(pascal_voc_file, output_file)
-    output_file_name = 'merged_annotations_mlflow.csv'
-    merge_csv_files(file_list, output_file_name)
-    create_train_test_val_split(output_file_name)    
+def shuffle_splits(merged_file_path, merge_classes):
+    # Read the merged CSV file and gather class names
+    class_names = set()
+    merged_file_name, merged_file_ext = os.path.splitext(merged_file_path)
+    shuffled_file_path = f"{merged_file_name}_shuffled{merged_file_ext}"
+    with open(merged_file_path, 'r') as merged_file:
+        reader = csv.reader(merged_file)
+        next(reader)  # Skip the header row
+        for row in reader:
+            class_names.add(row[2])
+
+    if merge_classes:
+        class_list = input("Enter a list of classes to merge (separated by comma): ")
+        class_list = [c.strip() for c in class_list.split(",")]
+
+        if class_list[0].lower().startswith("not:"):
+            class_list[0]=class_list[0].replace("not:", "").strip()
+            not_class_list = class_list
+            print(not_class_list)
+            class_list = list(set(class_names) - set(not_class_list))
+        else:
+            not_class_list = []
+
+        print(f"Merging classes {class_list} to 'other'")
+
+        # Replace class names with 'other'
+        with open(merged_file_path, 'r') as merged_file:
+            rows = list(csv.reader(merged_file))
+            for row in rows:
+                if row[2] in class_list:
+                    row[2] = "other"
+
+
+        with open(shuffled_file_path, 'w', newline='') as merged_file:
+            writer = csv.writer(merged_file)
+            writer.writerows(rows)
+
+        merged_file_path = shuffled_file_path
+
+    # Shuffle the splits and generate new train-test-validation split
+    create_train_test_val_split(merged_file_path)
+
+def main(directory, merged_csv):
+    if merged_csv:
+        merge_classes = input("Do you want to merge classes? (y/n): ").lower() == 'y'
+        if merge_classes:
+            shuffle_splits(merged_csv, merge_classes)
+        else:
+            shuffle_splits(merged_csv, False)
+    else:
+        file_list = []
+        for file in os.listdir(directory):
+            if file.endswith('.xml'):
+                output_file = os.path.splitext(file)[0] + '_mlflow.csv'
+                pascal_voc_file = os.path.join(directory, file)
+                file_list.append(output_file)
+                pascal_voc_to_mlflow_csv(pascal_voc_file, output_file)
+        output_file_name = 'merged_annotations_mlflow.csv'
+        merge_csv_files(file_list, output_file_name)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Converts Pascal VOC files to MLFlow CSV format')
-    parser.add_argument('directory', type=str, help='Path to the directory containing the Pascal VOC files to convert', default = '.')
+    parser = argparse.ArgumentParser(description='Converts Pascal VOC files to MLFlow CSV format and reshuffles splits')
+    parser.add_argument('directory', type=str, nargs='?', help='Path to the directory containing the Pascal VOC files to convert', default='.')
+    parser.add_argument('--merged_csv', type=str, help='Path to the already merged CSV file')
     args = parser.parse_args()
-    main(args.directory)
+    main(args.directory, args.merged_csv)
