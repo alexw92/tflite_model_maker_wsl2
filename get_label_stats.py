@@ -29,8 +29,13 @@ def get_label_stats(input_file):
         if data_file_url not in label_counts[label_name]:
             label_counts[label_name].add(data_file_url)
             label_splits[split_name][label_name] += 1
-
+            
+    class_list = list(label_counts.keys())  # Convert dictionary keys to a list
+    classes_string = ", ".join(class_list)  # Join the keys with commas
+    
     print("There are %s different files in this set" % len(all_files))
+    print("There are %s different classes in this set" % len(label_counts))
+    print("Classes: "+classes_string)
     for label, files in label_counts.items():
         print("%s occurs in %s different files" % (label, len(files)))
 
