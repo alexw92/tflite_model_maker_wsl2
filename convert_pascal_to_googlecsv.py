@@ -21,6 +21,8 @@ def pascal_voc_to_mlflow_csv(pascal_voc_file, mlflow_csv_file):
         
         parent_dir = os.path.dirname(os.path.dirname(pascal_voc_file))
         images_dir_name = root.find('folder').text
+        if images_dir_name is None:
+            images_dir_name = ""
         image_path = os.path.join(parent_dir, images_dir_name, root.find('filename').text)
         
         with open(mlflow_csv_file, 'a', newline='') as mlflow_csv:
