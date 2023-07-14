@@ -53,6 +53,18 @@ def merge_csv_files(file_list, output_file_name):
     output_folder = os.path.dirname(file_list[0])
     output_file_path = os.path.join(output_folder, output_file_name)
     
+    file_exists = os.path.isfile(output_file_path)
+
+    # If the file exists, add an increment number to the name
+    if file_exists:
+        base_name, extension = os.path.splitext(output_file_name)
+        increment = 1
+        while file_exists:
+            incremented_name = f"{base_name}{increment}{extension}"
+            output_file_path = os.path.join(output_folder, incremented_name)
+            file_exists = os.path.isfile(output_file_path)
+            increment += 1
+    
     with open(output_file_path, 'w', newline='') as output_file:
         writer = csv.writer(output_file)
         
@@ -160,41 +172,76 @@ def shuffle_splits(merged_file_path, merge_classes):
     class_names = set()
     merged_file_name, merged_file_ext = os.path.splitext(merged_file_path)
     shuffled_file_path = f"{merged_file_name}_shuffled{merged_file_ext}"
-    with open(merged_file_path, 'r') as merged_file:
-        reader = csv.reader(merged_file)
-        next(reader)  # Skip the header row
-        for row in reader:
-            class_names.add(row[2])
-
+    
+    # Check if automatic class merge is enabled
     if merge_classes:
-        class_list = input("Enter a list of classes to merge (separated by comma): ")
-        class_list = [c.strip() for c in class_list.split(",")]
-
-        if class_list[0].lower().startswith("not:"):
-            class_list[0]=class_list[0].replace("not:", "").strip()
-            not_class_list = class_list
-            print(not_class_list)
-            class_list = list(set(class_names) - set(not_class_list))
+        merge_mode = input("Enable automatic class merge? (y/n): ")
+        if merge_mode.lower() == 'y':
+            merge_file_path = input("Enter the URL to the merge file: ")
+            class_mapping = {}
+            
+            # Read the class mapping file
+            with open(merge_file_path, 'r') as merge_file:
+                for line in merge_file:
+                    print(line)
+                    line = line.strip()
+                    if line:
+                        class_name, merge_to = line.split(':')
+                        class_mapping[class_name] = merge_to.strip()
+            
+            print("Performing automatic class merge using the mapping file.")
+            print(class_mapping)
+            
+            # Replace class names based on the mapping file
+            with open(merged_file_path, 'r') as merged_file:
+                rows = list(csv.reader(merged_file))
+                for row in rows:
+                    if row[2] in class_mapping:
+                        row[2] = class_mapping[row[2]]
+            
+            # Write the modified data to the shuffled file
+            with open(shuffled_file_path, 'w', newline='') as shuffled_file:
+                writer = csv.writer(shuffled_file)
+                writer.writerows(rows)
+            
+            merged_file_path = shuffled_file_path
         else:
-            not_class_list = []
+            print("Skipping automatic class merge.")
+    
+    # If automatic class merge is not enabled or completed, ask for manual class merge
+    if not merge_classes or (merge_classes and merge_mode.lower() != 'y'):
+        class_list = input("Enter a list of classes to merge (separated by comma), or press Enter to skip: ")
+        
+        if class_list:
+            class_list = [c.strip() for c in class_list.split(",")]
 
-        print(f"Merging classes {class_list} to 'other'")
+            if class_list[0].lower().startswith("not:"):
+                class_list[0] = class_list[0].replace("not:", "").strip()
+                not_class_list = class_list
+                print(not_class_list)
+                class_list = list(set(class_names) - set(not_class_list))
+            else:
+                not_class_list = []
 
-        # Replace class names with 'other'
-        with open(merged_file_path, 'r') as merged_file:
-            rows = list(csv.reader(merged_file))
-            for row in rows:
-                if row[2] in class_list:
-                    row[2] = "other"
+            print(f"Merging classes {class_list} to 'other'")
 
+            # Replace class names with 'other'
+            with open(merged_file_path, 'r') as merged_file:
+                rows = list(csv.reader(merged_file))
+                for row in rows:
+                    if row[2] in class_list:
+                        row[2] = "other"
 
-        with open(shuffled_file_path, 'w', newline='') as merged_file:
-            writer = csv.writer(merged_file)
-            writer.writerows(rows)
+            # Write the modified data to the shuffled file
+            with open(shuffled_file_path, 'w', newline='') as shuffled_file:
+                writer = csv.writer(shuffled_file)
+                writer.writerows(rows)
 
-        merged_file_path = shuffled_file_path
+            merged_file_path = shuffled_file_path
+        else:
+            print("Skipping manual class merge.")
 
-    # Shuffle the splits and generate new train-test-validation split
+    # Shuffle the splits and generate a new train-test-validation split
     create_train_test_val_split(merged_file_path)
 
 def main(directory, merged_csv):
