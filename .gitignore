@@ -2,3 +2,4 @@
 *.txt
 models
 preds
+.ipynb_checkpoints
