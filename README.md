@@ -43,6 +43,10 @@ This shows how to set up tflite model maker on WSL2
     # Save the DataFrame to a CSV file in the desired format
     mlflow_df.to_csv("mlflow_annotations.csv", index=False)
   ```
+  Then download the images.
+  - First compress via ```tar -czvf /home/alex/all_imgs_11_10_23.tar.gz .```
+  - Then download with ```scp alex@foodsnapai.com:/home/alex/all_imgs_11_10_23.tar.gz allImgs.tar.gz```
+  - Then extract with ```tar -xzvf allImgs.tar.gz -C allImgs_extracted/```
 + Extract archive then convert to MLFlow format and perform dataset split
 
 ```bash
