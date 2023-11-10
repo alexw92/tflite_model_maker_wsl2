@@ -5,6 +5,44 @@ This shows how to set up tflite model maker on WSL2
 
 + Create and label dataset with Label Studio (Needed to use Firefox bc of Request Stalling)
 + Download dataset in PascalVoc Format
++ Actually better is to load in csv using
+  ```
+    curl -X GET http://url:8080/api/projects/1/export?exportType=CSV -H 'Authorization: Token xxx' --output 'annotations.csv' 
+  ```
+  and then convert it with
+  ```python
+    import pandas as pd
+    
+    # Read the provided CSV file
+    df = pd.read_csv("your_csv_file.csv")
+    
+    # Initialize a list to store the converted annotations
+    mlflow_annotations = []
+    
+    # Iterate through each row of the DataFrame
+    for _, row in df.iterrows():
+        image_path = row["image"]
+        annotations = json.loads(row["label"])  # Assuming the label column contains JSON-encoded data
+    
+        for annotation in annotations:
+            label = annotation["rectanglelabels"][0]  # Assuming only one label per annotation
+            x = annotation["x"]
+            y = annotation["y"]
+            width = annotation["width"]
+            height = annotation["height"]
+            
+            # Calculate x_max and y_max based on x, y, width, and height
+            x_max = x + width
+            y_max = y + height
+            
+            mlflow_annotations.append([image_path, label, x, y, "", "", x_max, y_max, "", ""])
+    
+    # Create a DataFrame from the converted annotations
+    mlflow_df = pd.DataFrame(mlflow_annotations, columns=["path", "label", "x_min", "y_min", "", "", "x_max", "y_max", "", ""])
+    
+    # Save the DataFrame to a CSV file in the desired format
+    mlflow_df.to_csv("mlflow_annotations.csv", index=False)
+  ```
 + Extract archive then convert to MLFlow format and perform dataset split
 
 ```bash
