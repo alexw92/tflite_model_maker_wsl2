@@ -3,6 +3,7 @@ from PIL import Image
 import os
 import sys
 from tqdm import tqdm
+import imghdr
 
 def convert_files_to_jpeg(csv_file):
     converted_files = []
@@ -23,6 +24,10 @@ def convert_files_to_jpeg(csv_file):
                         convert_png_to_jpeg(file_path, jpeg_file_path)
                         converted_files.append(file_name)
                     row[1] = jpeg_file_path  # Update the file path in the CSV row
+                elif 'jpeg' != imghdr.what(file_path):
+                    file_name, file_ext = os.path.splitext(file_path)
+                    convert_png_to_jpeg(file_path, file_path)
+                    converted_files.append(file_name)                
                 else:
                     ignored_files.append(file_path)
             else:
