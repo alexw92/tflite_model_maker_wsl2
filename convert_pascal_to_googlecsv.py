@@ -210,6 +210,16 @@ def shuffle_splits(merged_file_path, merge_classes):
     
     # If automatic class merge is not enabled or completed, ask for manual class merge
     if not merge_classes or (merge_classes and merge_mode.lower() != 'y'):
+        # get list of all classnames
+        with open(merged_file_path, 'r') as merged_file:
+            reader = csv.reader(merged_file)
+            header = next(reader)
+            for row in reader:
+                class_name = row[1]
+                if "." in class_name:
+                    class_name = row[2] 
+                class_names.add(class_name)    
+        
         class_list = input("Enter a list of classes to merge (separated by comma), or press Enter to skip: ")
         
         if class_list:
@@ -229,8 +239,11 @@ def shuffle_splits(merged_file_path, merge_classes):
             with open(merged_file_path, 'r') as merged_file:
                 rows = list(csv.reader(merged_file))
                 for row in rows:
-                    if row[2] in class_list:
-                        row[2] = "other"
+                    cls_index = 1
+                    if "." in row[cls_index]:
+                        cls_index = 2
+                    if row[cls_index] in class_list:
+                        row[cls_index] = "other"
 
             # Write the modified data to the shuffled file
             with open(shuffled_file_path, 'w', newline='') as shuffled_file:
