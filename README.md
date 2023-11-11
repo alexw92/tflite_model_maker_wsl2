@@ -147,6 +147,36 @@ python do_inference.py --input_csv /mnt/z/IdeaRepos/tflite_model_maker_wsl2/merg
  --model_url model_c49_180523/model.tflite --output_dir /home/alex/predictions1
 ```
 
+## Issues: 
+
+**Currently the inference does not work on the tflite model!**:
+
+```
+python /mnt/z/IdeaRepos/tflite_model_maker_wsl2/do_inference_other.py --input_csv /mnt/c/Users/Fistus/annotations_mlflow_shuffled_n.csv --output_dir /home/alex/test_out --model_url /home/alex/model_ed2_900_e50
+/home/alex/anaconda3/envs/conda_env/lib/python3.8/site-packages/tensorflow_addons/utils/ensure_tf_install.py:53: UserWarning: Tensorflow Addons supports using Python ops for all Tensorflow versions above or equal to 2.9.0 and strictly below 2.12.0 (nightly versions are not supported).
+ The versions of TensorFlow you are currently using is 2.8.4 and is not supported.
+Some things might work, some things might not.
+If you were to encounter a bug, do not file an issue.
+If you want to make sure you're using a tested and supported configuration, either change the TensorFlow version or the TensorFlow Addons's version.
+You can find the compatibility matrix in TensorFlow Addon's readme:
+https://github.com/tensorflow/addons
+  warnings.warn(
+Traceback (most recent call last):
+  File "/mnt/z/IdeaRepos/tflite_model_maker_wsl2/do_inference_other.py", line 190, in <module>
+    main(args)
+  File "/mnt/z/IdeaRepos/tflite_model_maker_wsl2/do_inference_other.py", line 150, in main
+    interpreter = tf.lite.Interpreter(model_path=model_path)
+  File "/home/alex/anaconda3/envs/conda_env/lib/python3.8/site-packages/tensorflow/lite/python/interpreter.py", line 456, in __init__
+    _interpreter_wrapper.CreateWrapperFromFile(
+ValueError: Mmap of '3' at offset '0' failed with error '19'.
+```
+**Already on export something could be wrong:**
+```
+>>> model.export(export_dir='model_ed2_900_e50')
+2023-11-11 02:36:17.027448: W tensorflow/python/util/util.cc:368] Sets are not currently considered sequences, but this may change in the future, so consider avoiding using them.
+2023-11-11 02:36:34.875824: W tensorflow/core/common_runtime/graph_constructor.cc:803] Node 'resample_p7/PartitionedCall' has 1 outputs but the _output_shapes attribute specifies shapes for 3 outputs. Output shapes may be inaccurate.
+```
+
 ## Train with checkpoints
 
 In order to run with checkpoints and check training progress with tensorboard do this
