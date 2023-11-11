@@ -15,8 +15,9 @@ from tflite_model_maker import object_detector
 
 import tensorflow as tf
 
-label_map =  {1: 'other', 2: 'basil', 3: 'tomato', 4: 'apple', 5: 'pumpkin', 6: 'lime', 7: 'cheese', 8: 'egg'}
-num_classes = 8
+label_map =  {1: 'other', 2: 'Zucchini', 3: 'Tomato', 4: 'Apple', 5: 'Potato', 6: 'Onion', 7: 'Garlic', 8: 'Banana', 9: 'Cucumber', 10: 'Bell-Pepper', 11: 'Lemon', 12: 'Carrot',
+ 13: 'Scallion'}
+num_classes = 13
 
 # Load the labels into a list
 classes = ['???'] * num_classes
@@ -116,7 +117,6 @@ def run_odt_and_draw_results(image_path, interpreter, threshold=0.5):
   return original_uint8
   
 def load_labels():
-    label_map = label_map =  {1: 'other', 2: 'basil', 3: 'tomato', 4: 'apple', 5: 'pumpkin', 6: 'lime', 7: 'cheese', 8: 'egg'}
     return label_map  
 
 def convert_to_png(file_path):
@@ -146,7 +146,6 @@ def main(args):
 
             if split == "TEST":
                 test_files.add(file_path)
-
     # Load the TFLite model
     interpreter = tf.lite.Interpreter(model_path=model_path)
     interpreter.allocate_tensors()
