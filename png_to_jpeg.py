@@ -2,7 +2,7 @@ import csv
 from PIL import Image
 import os
 import sys
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import imghdr
 
 def convert_files_to_jpeg(csv_file):
@@ -51,8 +51,9 @@ def convert_png_to_jpeg(png_file, jpeg_file):
 # Usage
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        csv_file = "/mnt/z/IdeaRepos/tflite_model_maker_wsl2/merged_annotations_mlflow.csv"
+        csv_file = "annotations_mlflow_shuffled.csv"
     else:
         csv_file = sys.argv[1]
+    print("convert png image files to jpeg imgs")    
     convert_files_to_jpeg(csv_file)
     

@@ -2,6 +2,7 @@ from PIL import Image
 from tqdm import tqdm
 import os
 import sys
+import shutil
 
 def resize_images_in_directory(input_directory, output_directory, target_dimension):
     # Create the output directory if it doesn't exist
@@ -20,15 +21,22 @@ def resize_images_in_directory(input_directory, output_directory, target_dimensi
 
         # Open the image file
         with Image.open(input_path) as img:
-            # Calculate the other dimension to maintain the aspect ratio
-            width_percent = (target_dimension / float(img.size[0]))
-            target_height = int((float(img.size[1]) * float(width_percent)))
+             # Check if resizing is necessary
+            if img.size[0] > target_dimension:
+                        # Calculate the other dimension to maintain the aspect ratio
+                        width_percent = (target_dimension / float(img.size[0]))
+                        target_height = int((float(img.size[1]) * float(width_percent)))
 
-            # Resize the image while preserving the aspect ratio
-            resized_img = img.resize((target_dimension, target_height), Image.ANTIALIAS)
+                        # Resize the image while preserving the aspect ratio
+                        resized_img = img.resize((target_dimension, target_height), Image.ANTIALIAS)
 
-            # Save the resized image
-            resized_img.save(output_path)
+                        # Save the resized image
+                        resized_img.save(output_path)
+                        print(f"Image resized and saved to {output_path}")
+            else:
+                # If no resizing is needed, simply copy the image to the output directory
+                shutil.copy(input_path, output_path)
+                print(f"The image at {input_path} does not need resizing. Copying to {output_path}")
 
 if __name__ == "__main__":
     # Check if the correct number of command line arguments is provided
