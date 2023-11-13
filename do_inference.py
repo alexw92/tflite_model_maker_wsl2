@@ -14,58 +14,9 @@ from tflite_model_maker import object_detector
 
 import tensorflow as tf
 
-label_map = {
-    1: 'rice',
-    2: 'carrot',
-    3: 'strawberry',
-    4: 'potato',
-    5: 'grape',
-    6: 'kidney bean',
-    7: 'butter',
-    8: 'water melon',
-    9: 'tofu',
-    10: 'lentil',
-    11: 'sweet potato',
-    12: 'chickpea',
-    13: 'cherry',
-    14: 'chilli',
-    15: 'avocado',
-    16: 'raspberry',
-    17: 'zucchini',
-    18: 'pear',
-    19: 'brocoli',
-    20: 'tomato',
-    21: 'mango',
-    22: 'onion',
-    23: 'garlic',
-    24: 'apple',
-    25: 'coucous',
-    26: 'quinoa',
-    27: 'cucumber',
-    28: 'lemon',
-    29: 'ananas',
-    30: 'plum',
-    31: 'cantaloupe',
-    32: 'califlower',
-    33: 'kiwi',
-    34: 'black bean',
-    35: 'green bean',
-    36: 'bell pepper',
-    37: 'banana',
-    38: 'spinach',
-    39: 'blackberry',
-    40: 'blueberry',
-    41: 'orange',
-    42: 'mushroom',
-    43: 'basil',
-    44: 'parsley',
-    45: 'egg',
-    46: 'ginger',
-    47: 'lime',
-    48: 'pumpkin',
-    49: 'cheese'
-}
-num_classes = 49
+label_map =  {1: 'other', 2: 'Apple', 3: 'Egg', 4: 'Cucumber', 5: 'Onion', 6: 'Bell-Pepper', 7: 'Banana', 8: 'Lemon', 9: 'Tomato', 10: 'Garlic', 11: 'Carrot', 12: 'Potato',
+ 13: 'Zucchini', 14: 'Pumpkin'}
+num_classes = 14
 
 # Load the labels into a list
 classes = ['???'] * num_classes
@@ -141,70 +92,38 @@ def run_odt_and_draw_results(image_path, interpreter, threshold=0.5):
     class_id = int(obj['class_id'])
 
     # Draw the bounding box and label on the image
+   # color = [int(c) for c in COLORS[class_id]]
+   # cv2.rectangle(original_image_np, (xmin, ymin), (xmax, ymax), color, 2)
+    # Make adjustments to make the label visible for all objects
+   # y = ymin - 15 if ymin - 15 > 15 else ymin + 15
+   # label = "{}: {:.0f}%".format(classes[class_id], obj['score'] * 100)
+   # cv2.putText(original_image_np, label, (xmin, y),
+   #     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        
+        # Draw the bounding box and label on the image
     color = [int(c) for c in COLORS[class_id]]
     cv2.rectangle(original_image_np, (xmin, ymin), (xmax, ymax), color, 2)
+
     # Make adjustments to make the label visible for all objects
     y = ymin - 15 if ymin - 15 > 15 else ymin + 15
     label = "{}: {:.0f}%".format(classes[class_id], obj['score'] * 100)
-    cv2.putText(original_image_np, label, (xmin, y),
-        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+    # Get the size of the text to determine the size of the background rectangle
+    (label_width, label_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+
+    # Draw a filled black rectangle as the background
+    cv2.rectangle(original_image_np, (xmin, y - label_height), (xmin + label_width, y), color, cv2.FILLED)
+
+    # Draw the text on top of the background
+    cv2.putText(original_image_np, label, (xmin, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)    
 
   # Return the final image
   original_uint8 = original_image_np.astype(np.uint8)
   return original_uint8
   
 def load_labels():
-    label_map = {
-        1: 'rice',
-        2: 'carrot',
-        3: 'strawberry',
-        4: 'potato',
-        5: 'grape',
-        6: 'kidney bean',
-        7: 'butter',
-        8: 'water melon',
-        9: 'tofu',
-        10: 'lentil',
-        11: 'sweet potato',
-        12: 'chickpea',
-        13: 'cherry',
-        14: 'chilli',
-        15: 'avocado',
-        16: 'raspberry',
-        17: 'zucchini',
-        18: 'pear',
-        19: 'brocoli',
-        20: 'tomato',
-        21: 'mango',
-        22: 'onion',
-        23: 'garlic',
-        24: 'apple',
-        25: 'coucous',
-        26: 'quinoa',
-        27: 'cucumber',
-        28: 'lemon',
-        29: 'ananas',
-        30: 'plum',
-        31: 'cantaloupe',
-        32: 'califlower',
-        33: 'kiwi',
-        34: 'black bean',
-        35: 'green bean',
-        36: 'bell pepper',
-        37: 'banana',
-        38: 'spinach',
-        39: 'blackberry',
-        40: 'blueberry',
-        41: 'orange',
-        42: 'mushroom',
-        43: 'basil',
-        44: 'parsley',
-        45: 'egg',
-        46: 'ginger',
-        47: 'lime',
-        48: 'pumpkin',
-        49: 'cheese'
-    }
+    label_map =  {1: 'other', 2: 'Apple', 3: 'Egg', 4: 'Cucumber', 5: 'Onion', 6: 'Bell-Pepper', 7: 'Banana', 8: 'Lemon', 9: 'Tomato', 10: 'Garlic', 11: 'Carrot', 12: 'Potato',
+ 13: 'Zucchini', 14: 'Pumpkin'}
     return label_map  
 
 def convert_to_png(file_path):
