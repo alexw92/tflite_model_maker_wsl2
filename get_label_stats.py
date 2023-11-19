@@ -11,6 +11,11 @@ def get_label_stats(input_file):
         rows = list(reader)
 
     for row in rows[1:]:
+        if len(row)<3:
+            print(f" Empty row after processing {len(all_files)} rows")
+            print(row)
+            break
+            # raise Exception(f"Line {row} not correct") 
         split_name = row[0]
         label_name = row[2]
         data_file_url = row[1]
