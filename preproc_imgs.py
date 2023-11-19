@@ -10,7 +10,8 @@ def resize_images_in_directory(input_directory, output_directory, target_dimensi
 
     # Get the list of JPEG files in the directory
     jpg_files = [filename for filename in os.listdir(input_directory) if filename.lower().endswith(('.jpg', '.jpeg'))]
-
+    resized_count = 0
+    no_resizing = 0
     # Iterate over all files in the directory with tqdm for progress visualization
     for filename in tqdm(jpg_files, desc='Resizing images'):
         # Full path to the input image
@@ -23,6 +24,8 @@ def resize_images_in_directory(input_directory, output_directory, target_dimensi
         with Image.open(input_path) as img:
              # Check if resizing is necessary
             if img.size[0] > target_dimension:
+                        print(img.size[0])
+                        print(target_dimension)
                         # Calculate the other dimension to maintain the aspect ratio
                         width_percent = (target_dimension / float(img.size[0]))
                         target_height = int((float(img.size[1]) * float(width_percent)))
@@ -32,11 +35,11 @@ def resize_images_in_directory(input_directory, output_directory, target_dimensi
 
                         # Save the resized image
                         resized_img.save(output_path)
-                        print(f"Image resized and saved to {output_path}")
+                        resized_count = resized_count + 1
             else:
                 # If no resizing is needed, simply copy the image to the output directory
                 shutil.copy(input_path, output_path)
-                print(f"The image at {input_path} does not need resizing. Copying to {output_path}")
+                no_resizing = no_resizing + 1
 
 if __name__ == "__main__":
     # Check if the correct number of command line arguments is provided
@@ -51,3 +54,5 @@ if __name__ == "__main__":
 
     # Call the function with the provided arguments
     resize_images_in_directory(input_directory, output_directory, target_dimension)
+    print(f"{no_resizing} images did not need resizing. Copied to {output_path}")
+    print(f"{resized_count} did not need resizing. Copied to {output_path}")
