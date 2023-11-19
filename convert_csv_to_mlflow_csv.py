@@ -19,10 +19,11 @@ if not os.path.isfile(input_csv_file) or not input_csv_file.endswith('.csv'):
 # Define the output file name
 output_csv_file = os.path.splitext(input_csv_file)[0] + "_mlflow.csv"
 
+# override file if already present
 # Check if the output file already exists in the current directory
-if os.path.exists(output_csv_file):
-    print(f"The output file '{output_csv_file}' already exists. Program terminated.")
-    sys.exit(1)
+# if os.path.exists(output_csv_file):
+#    print(f"The output file '{output_csv_file}' already exists. Program terminated.")
+#    sys.exit(1)
 
 # Read the provided CSV file
 df = pd.read_csv(input_csv_file)
