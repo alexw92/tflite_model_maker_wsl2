@@ -14,16 +14,11 @@ from tflite_model_maker import object_detector
 
 import tensorflow as tf
 
-label_map =  {1: 'other', 2: 'Apple', 3: 'Egg', 4: 'Cucumber', 5: 'Onion', 6: 'Bell-Pepper', 7: 'Banana', 8: 'Lemon', 9: 'Tomato', 10: 'Garlic', 11: 'Carrot', 12: 'Potato',
- 13: 'Zucchini', 14: 'Pumpkin'}
-num_classes = 14
+label_map = None
+num_classes = None
+COLORS = None
+classes = None
 
-# Load the labels into a list
-classes = ['???'] * num_classes
-for label_id, label_name in label_map.items():
-  classes[label_id-1] = label_name
-# Define a list of colors for visualization
-COLORS = np.random.randint(0, 255, size=(len(classes), 3), dtype=np.uint8)
 
 def preprocess_image(image_path, input_size):
   """Preprocess the input image to feed to the TFLite model"""
@@ -121,10 +116,16 @@ def run_odt_and_draw_results(image_path, interpreter, threshold=0.5):
   original_uint8 = original_image_np.astype(np.uint8)
   return original_uint8
   
-def load_labels():
-    label_map =  {1: 'other', 2: 'Apple', 3: 'Egg', 4: 'Cucumber', 5: 'Onion', 6: 'Bell-Pepper', 7: 'Banana', 8: 'Lemon', 9: 'Tomato', 10: 'Garlic', 11: 'Carrot', 12: 'Potato',
- 13: 'Zucchini', 14: 'Pumpkin'}
-    return label_map  
+def load_labels(label_file):
+  # load labels from label file
+  import json
+
+  # Loading the dictionary from the JSON file
+  with open(label_file, 'r') as file:
+      label_map = json.load(file)
+  label_map = {int(key): value for key, value in label_map.items()}
+  # Printing the loaded dictionary
+  return label_map  
 
 def convert_to_png(file_path):
     im = Image.open(file_path)
@@ -138,10 +139,23 @@ def main(args):
     model_path = args.model_url
     detection_threshold = args.threshold
     output_dir = args.output_dir
-
+    label_file = args.label_file
+    print(f'Predications will be saved to {output_dir}')
+    
     os.makedirs(output_dir, exist_ok=True)
+  
+  # get class names and order
+    global label_map, num_classes, classes
+    label_map = load_labels(label_file)
+    num_classes = len(label_map)
 
-    label_map = load_labels()
+    # Load the labels into a list
+    classes = ['???'] * num_classes
+    for label_id, label_name in label_map.items():
+      classes[label_id-1] = label_name
+    # Define a list of colors for visualization
+    global COLORS
+    COLORS = np.random.randint(0, 255, size=(len(classes), 3), dtype=np.uint8)
 
     test_files = set()
 
@@ -183,7 +197,6 @@ def main(args):
             save_url = os.path.join(output_dir, f"prediction_{Path(file_path).name}")
             img = Image.fromarray(detection_result_image)
             img.save(save_url, 'PNG')
-            print(f"Prediction saved to {save_url}")
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
             
@@ -194,5 +207,6 @@ if __name__ == '__main__':
     parser.add_argument('--threshold', type=int, help='Detection_threshold', default=0.3)
     parser.add_argument('--input_csv', type=str, help='CSV file containing file paths and splits', default='input.csv')
     parser.add_argument('--output_dir', type=str, help='Output dir to save predictions to', default='/home/alex/predictions')
+    parser.add_argument('--label_file', type=str, help='The file where the label map is specified', default='/home/alex/label_map.json')
     args = parser.parse_args()
     main(args)
