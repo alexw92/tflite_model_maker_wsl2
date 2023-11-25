@@ -4,4 +4,5 @@ models
 preds
 .ipynb_checkpoints
 models/
-output_inference/
+output_inference*/
+annotations*
