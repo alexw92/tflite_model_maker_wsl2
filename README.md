@@ -194,7 +194,35 @@ tensorboard serve --logdir .
 
 Now you should be able to visualize train and val loss during training :)
 
-## Installation
+## Installation of TF+Cuda+Cudnn (Way 1)
+An alternative as the one from pip is to use Conda.
+There are tf packages with bundles cudnn and cuda and it even worked on an AVX GPU!
+```
+conda activate tf_gpu_env
+(tf_gpu_env) alex@DESKTOP-IMOJ0PL:~$ conda install tensorflow=2.8.2=gpu_py38h75b8afa_0
+```
+
+AND IT WORKED:
+```
+>>> import tensorflow as tf
+>>> tf.config.list_physical_devices('GPU')
+2023-12-18 01:18:17.785271: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:922] could not open file to read NUMA node: /sys/bus/pci/devices/0000:02:00.0/numa_node
+Your kernel may have been built without NUMA support.
+2023-12-18 01:18:17.799686: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:922] could not open file to read NUMA node: /sys/bus/pci/devices/0000:02:00.0/numa_node
+Your kernel may have been built without NUMA support.
+2023-12-18 01:18:17.800511: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:922] could not open file to read NUMA node: /sys/bus/pci/devices/0000:02:00.0/numa_node
+Your kernel may have been built without NUMA support.
+[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+```
+
+This is the easiest installation of Cuda+CudNN from all!
+However I tested it after installing Cuda 11.2 and Cudnn(archive) manually and setting paths.
+But since the Versions are a bit different I wonder if that was even necessary.
+If I can reproduce this again on a minimal WSL this would be by far the easiest installation
+
+## Installation of model maker 0.4.3 after installation of cuda tensorflow (Way 1)
+
+## Installation (Way 2)
 0.) You need python38 for doing this!
 Oh and **dont even think of building python3810 from source! It will fuck everything up!**
 
@@ -243,6 +271,29 @@ tflite-model-maker            0.4.2     /home/alex/examples/tensorflow_examples/
 2.1) I got an error importing something in modelmaker so I downgraded numpy to 1.23
 Then I continued with [this](https://www.tensorflow.org/lite/models/modify/model_maker/object_detection)
 
+2.2)
+Now I got the following error which I am unable to fix
+
+```
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/tflite_model_maker/__init__.py", line 51, in <module>
+    from tflite_model_maker import searcher
+  File "/home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/tflite_model_maker/searcher/__init__.py", line 25, in <module>
+    from tensorflow_examples.lite.model_maker.core.task.searcher import ExportFormat
+  File "/home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/tensorflow_examples/lite/model_maker/core/task/searcher.py", line 30, in <module>
+    from tensorflow_examples.lite.model_maker.core.utils import ondevice_scann_builder
+  File "/home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/tensorflow_examples/lite/model_maker/core/utils/ondevice_scann_builder.py", line 17, in <module>
+    from scann.proto import scann_pb2
+  File "/home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/scann/__init__.py", line 2, in <module>
+    from scann.scann_ops.py import scann_ops
+  File "/home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/scann/scann_ops/py/scann_ops.py", line 23, in <module>
+    _scann_ops_so = tf.load_op_library(
+  File "/home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/tensorflow/python/framework/load_library.py", line 54, in load_op_library
+    lib_handle = py_tf.TF_LoadLibrary(library_filename)
+tensorflow.python.framework.errors_impl.NotFoundError: /home/alex/anaconda3/envs/just_mm/lib/python3.8/site-packages/scann/scann_ops/cc/_scann_ops.so: undefined symbol: _ZN4absl12lts_2021032420raw_logging_internal21internal_log_functionE
+```
+
 ```python
 import numpy as np
 import os
@@ -259,6 +310,9 @@ tf.get_logger().setLevel('ERROR')
 from absl import logging
 logging.set_verbosity(logging.ERROR)
 ```
+
+Probably because I used the conda tensorflow but honestly I dont know.
+this also happens when installing model maker from pip.
 
 ```python
 spec = model_spec.get('efficientdet_lite0')
