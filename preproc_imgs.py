@@ -43,7 +43,7 @@ def resize_images_in_directory(input_directory, output_directory, target_dimensi
         except (IOError, OSError, Image.UnidentifiedImageError) as e:
             print(f"Error processing {filename}: {e}")       
     print(f"{no_resizing} images did not need resizing. Copied to {output_path}")
-    print(f"{resized_count} did not need resizing. Copied to {output_path}")             
+    print(f"{resized_count} did need resizing. Copied to {output_path}")             
 
 if __name__ == "__main__":
     # Check if the correct number of command line arguments is provided
