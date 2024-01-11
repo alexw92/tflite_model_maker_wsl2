@@ -35,7 +35,8 @@ args = parser.parse_args()
 only_folds = args.only_folds
 epochs = args.epochs
 batch_size = args.batch_size
-model_name = 'efficientdet-' + args.model_name
+m_name = args.model_name
+model_name = 'efficientdet-' + m_name
 
 print(f"training with {str(epochs)} epochs, {str(batch_size)} batch_size, folds {only_folds} ")
 fold_files = ['4684_cv_fold_0.csv','4684_cv_fold_1.csv','4684_cv_fold_2.csv','4684_cv_fold_3.csv','4684_cv_fold_4.csv']
@@ -49,16 +50,54 @@ for fold_i, fold_file in enumerate(fold_files):
     #spec = model_spec.get('efficientdet_lite1')
     # check this url to check valid hparam values
     # https://github.com/tensorflow/examples/blob/master/tensorflow_examples/lite/model_maker/third_party/efficientdet/hparams_config.py
-    spec = object_detector.EfficientDetLite1Spec( # change this also to correct model spec
-        model_name = model_name,
-     #   model_dir='/home/alex/checkpoints/',
-      #  hparams='grad_checkpoint=true,strategy=gpus',
-        hparams='strategy=gpus',
-        epochs=epochs, batch_size=batch_size,
-        steps_per_execution=1, moving_average_decay=0,
-        var_freeze_expr='(efficientnet|fpn_cells|resample_p6)',
-        tflite_max_detections=25
-    )
+    spec = None
+    
+    if m_name == "lite0":
+        object_detector.EfficientDetLite0Spec(
+            model_name = model_name,
+        #   model_dir='/home/alex/checkpoints/',
+        #  hparams='grad_checkpoint=true,strategy=gpus',
+            hparams='strategy=gpus',
+            epochs=epochs, batch_size=batch_size,
+            steps_per_execution=1, moving_average_decay=0,
+            var_freeze_expr='(efficientnet|fpn_cells|resample_p6)',
+            tflite_max_detections=25
+        )
+    elif m_name == "lite1":
+        object_detector.EfficientDetLite1Spec(
+            model_name = model_name,
+        #   model_dir='/home/alex/checkpoints/',
+        #  hparams='grad_checkpoint=true,strategy=gpus',
+            hparams='strategy=gpus',
+            epochs=epochs, batch_size=batch_size,
+            steps_per_execution=1, moving_average_decay=0,
+            var_freeze_expr='(efficientnet|fpn_cells|resample_p6)',
+            tflite_max_detections=25
+        )  
+    elif m_name == "lite2":
+        object_detector.EfficientDetLite2Spec(
+            model_name = model_name,
+        #   model_dir='/home/alex/checkpoints/',
+        #  hparams='grad_checkpoint=true,strategy=gpus',
+            hparams='strategy=gpus',
+            epochs=epochs, batch_size=batch_size,
+            steps_per_execution=1, moving_average_decay=0,
+            var_freeze_expr='(efficientnet|fpn_cells|resample_p6)',
+            tflite_max_detections=25
+        )  
+    elif m_name == "lite3":
+        object_detector.EfficientDetLite3Spec(
+            model_name = model_name,
+        #   model_dir='/home/alex/checkpoints/',
+        #  hparams='grad_checkpoint=true,strategy=gpus',
+            hparams='strategy=gpus',
+            epochs=epochs, batch_size=batch_size,
+            steps_per_execution=1, moving_average_decay=0,
+            var_freeze_expr='(efficientnet|fpn_cells|resample_p6)',
+            tflite_max_detections=25
+        )
+    else:
+        raise Exception(f"Model selection invalid! Was {m_name}")       
     
     train_data, validation_data, test_data = object_detector.DataLoader.from_csv(fold_file)
     
