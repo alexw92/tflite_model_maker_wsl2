@@ -53,7 +53,7 @@ for fold_i, fold_file in enumerate(fold_files):
     spec = None
     
     if m_name == "lite0":
-        object_detector.EfficientDetLite0Spec(
+        spec = object_detector.EfficientDetLite0Spec(
             model_name = model_name,
         #   model_dir='/home/alex/checkpoints/',
         #  hparams='grad_checkpoint=true,strategy=gpus',
@@ -64,7 +64,7 @@ for fold_i, fold_file in enumerate(fold_files):
             tflite_max_detections=25
         )
     elif m_name == "lite1":
-        object_detector.EfficientDetLite1Spec(
+        spec = object_detector.EfficientDetLite1Spec(
             model_name = model_name,
         #   model_dir='/home/alex/checkpoints/',
         #  hparams='grad_checkpoint=true,strategy=gpus',
@@ -75,7 +75,7 @@ for fold_i, fold_file in enumerate(fold_files):
             tflite_max_detections=25
         )  
     elif m_name == "lite2":
-        object_detector.EfficientDetLite2Spec(
+        spec = object_detector.EfficientDetLite2Spec(
             model_name = model_name,
         #   model_dir='/home/alex/checkpoints/',
         #  hparams='grad_checkpoint=true,strategy=gpus',
@@ -86,7 +86,7 @@ for fold_i, fold_file in enumerate(fold_files):
             tflite_max_detections=25
         )  
     elif m_name == "lite3":
-        object_detector.EfficientDetLite3Spec(
+        spec = object_detector.EfficientDetLite3Spec(
             model_name = model_name,
         #   model_dir='/home/alex/checkpoints/',
         #  hparams='grad_checkpoint=true,strategy=gpus',
