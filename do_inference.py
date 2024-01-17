@@ -140,7 +140,15 @@ def main(args):
     detection_threshold = args.threshold
     output_dir = args.output_dir
     label_file = args.label_file
+    input_dir = args.input_dir
     print(f'Predications will be saved to {output_dir}')
+    if input_dir is None and input_csv is None:
+      print("Either input_dir or input_csv must be specified!")
+      return
+    if input_dir is None:
+      print(f"Inference files will be loaded from csv file {input_csv}")
+    else:
+      print(f"Inference files will be loaded from directory {input_dir}")  
     
     os.makedirs(output_dir, exist_ok=True)
   
@@ -159,14 +167,19 @@ def main(args):
 
     test_files = set()
 
-    with open(input_csv, 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            split = row[0]
-            file_path = row[1]
+    if input_dir is None:
+      with open(input_csv, 'r') as file:
+          reader = csv.reader(file)
+          for row in reader:
+              split = row[0]
+              file_path = row[1]
 
-            if split == "TEST":
-                test_files.add(file_path)
+              if split == "TEST":
+                  test_files.add(file_path)
+    else:
+          for root, dirs, files in os.walk(input_dir):
+            for file in files:
+              test_files.add(os.path.join(root, file))       
 
     # Load the TFLite model
     interpreter = tf.lite.Interpreter(model_path=model_path)
@@ -179,12 +192,14 @@ def main(args):
 
         file_name, file_ext = os.path.splitext(file_path)
 
-        if file_ext.lower() != ".jpg" and file_ext.lower() != ".jpeg":
+        if file_ext.lower() != ".jpg" and file_ext.lower() != ".jpeg"and file_ext.lower() != ".png":
             print(f"Ignored {file_path}: Not a JPG file")
             continue
 
         try:
-            png_file_path = convert_to_png(file_path)
+            png_file_path = file_path
+            if file_ext.lower() != ".png":
+                png_file_path = convert_to_png(file_path)
 
             # Run inference and draw detection result on the local copy of the original file
             detection_result_image = run_odt_and_draw_results(
@@ -206,6 +221,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_url', type=str, help='The path to your tf-lite model', default='model.tflite')
     parser.add_argument('--threshold', type=int, help='Detection_threshold', default=0.3)
     parser.add_argument('--input_csv', type=str, help='CSV file containing file paths and splits', default='input.csv')
+    parser.add_argument('--input_dir', type=str, help='directory containing files to run inference on')
     parser.add_argument('--output_dir', type=str, help='Output dir to save predictions to', default='/home/alex/predictions')
     parser.add_argument('--label_file', type=str, help='The file where the label map is specified', default='/home/alex/label_map.json')
     args = parser.parse_args()
