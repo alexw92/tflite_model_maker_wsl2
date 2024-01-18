@@ -14,6 +14,11 @@ def load_images(main_dir):
                 model_path = os.path.join(main_dir, model, f"prediction_{file}")
                 if os.path.exists(model_path):
                     images[file_no_ext][model] = model_path
+                else:
+                    # Try replacing the file extension with .jpg
+                    jpg_model_path = model_path.rsplit('.', 1)[0] + '.jpg'
+                    if os.path.exists(jpg_model_path):
+                        images[file_no_ext][model] = jpg_model_path
     return images, model_names
 
 def toggle_model_display():

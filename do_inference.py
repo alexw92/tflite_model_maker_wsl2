@@ -127,12 +127,25 @@ def load_labels(label_file):
   # Printing the loaded dictionary
   return label_map  
 
+# todo test this
 def convert_to_png(file_path):
-    im = Image.open(file_path)
-    im.thumbnail((512, 512), Image.ANTIALIAS)
-    png_file_path = file_path.replace('.jpg', '.png')
-    im.save(png_file_path, 'PNG')
-    return png_file_path  
+    # Check if the file is already a PNG
+    if file_path.lower().endswith('.png'):
+        return file_path
+
+    # Check if a PNG version already exists
+    png_file_path = file_path.rsplit('.', 1)[0] + '.png'
+    if os.path.isfile(png_file_path):
+        return png_file_path
+
+    # Convert JPEG to PNG if PNG does not exist
+    print(f"png does not exist {png_file_path}")
+    if file_path.lower().endswith('.jpg') or file_path.lower().endswith('.jpeg'):
+        im = Image.open(file_path)
+        im.thumbnail((512, 512), Image.ANTIALIAS)
+        im.save(png_file_path, 'PNG')
+
+    return png_file_path
 
 def main(args):
     input_csv = args.input_csv
@@ -177,9 +190,9 @@ def main(args):
               if split == "TEST":
                   test_files.add(file_path)
     else:
-          for root, dirs, files in os.walk(input_dir):
-            for file in files:
-              test_files.add(os.path.join(root, file))       
+          for file in os.listdir(input_dir):
+              if file.lower().endswith(('.jpg', '.jpeg')):
+                test_files.add(os.path.join(input_dir, file))
 
     # Load the TFLite model
     interpreter = tf.lite.Interpreter(model_path=model_path)
