@@ -6,3 +6,5 @@ preds
 models/
 output_inference*/
 annotations*
+annotations/
+annotations_old/
