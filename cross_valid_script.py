@@ -42,11 +42,13 @@ model_name = 'efficientdet-' + m_name
 no_other_infix = ""
 
 print(f"training with {str(epochs)} epochs, {str(batch_size)} batch_size, folds {only_folds} ")
+fold_dir = "annotations/cross_val/"
 fold_files = ['4650_cv_fold_0.csv','4650_cv_fold_1.csv','4650_cv_fold_2.csv','4650_cv_fold_3.csv','4650_cv_fold_4.csv']
 if no_other:
     fold_files = ['4650_cv_fold_0_no_other.csv','4650_cv_fold_1.csv','4650_cv_fold_2.csv','4650_cv_fold_3.csv','4650_cv_fold_4.csv']
     no_other_infix = "_no_"
 for fold_i, fold_file in enumerate(fold_files):
+    fold_file = os.path.join(fold_dir, fold_file)
     if only_folds is not None and len(only_folds)>0 and fold_i not in only_folds:
         print(f"Skipping fold {fold_i} because not in fold list {only_folds}")
         continue

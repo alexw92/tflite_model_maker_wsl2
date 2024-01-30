@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from collections import Counter
 import argparse
+import os
 
 # Setting up command-line argument parsing
 parser = argparse.ArgumentParser(description='Perform stratified K-Fold on object detection dataset.')
@@ -9,6 +10,9 @@ parser.add_argument('csv_file', type=str, help='Path to the CSV dataset file')
 args = parser.parse_args()
 
 # Load the dataset from the provided file path
+absolute_path = os.path.abspath(args.csv_file)
+dir, file_name = os.path.split(absolute_path)
+cross_val_dir = os.path.join(dir, 'cross_val')
 df = pd.read_csv(args.csv_file)
 
 # Correcting the column names based on your dataset format
@@ -53,11 +57,13 @@ for fold, validation_data in folds.items():
 
     # Save to CSV
     filename = f'{num_imgs}_cv_fold_{fold}.csv'
-    combined_data.to_csv(filename, index=False, header=False)
+    out_files_folds = os.path.join(cross_val_dir, filename)
+    combined_data.to_csv(out_files_folds, index=False, header=False)
 
     # Collect class distributions for the validation fold
     class_distributions[f'Fold {fold}'] = validation_data['Label'].value_counts()
 
 # Convert class distributions to a DataFrame and save
 class_distribution_df = pd.DataFrame(class_distributions)
-class_distribution_df.to_csv(f'{num_imgs}_class_distributions.csv')
+out_files_distrib = os.path.join(cross_val_dir, f'{num_imgs}_class_distributions.csv')
+class_distribution_df.to_csv(out_files_distrib)

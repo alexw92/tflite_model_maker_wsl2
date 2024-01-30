@@ -17,7 +17,9 @@ if not os.path.isfile(input_csv_file) or not input_csv_file.endswith('.csv'):
     sys.exit(1)
 
 # Define the output file name
-output_csv_file = os.path.splitext(input_csv_file)[0] + "_mlflow.csv"
+dir_name, file_name = os.path.split(input_csv_file)
+file_name_without_ext, ext = os.path.splitext(file_name)
+output_csv_file = os.path.join(dir_name, file_name_without_ext + "_mlflow" + ext)
 
 # override file if already present
 # Check if the output file already exists in the current directory
