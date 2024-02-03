@@ -5,20 +5,21 @@ import os
 from collections import defaultdict
 import csv
 from tqdm import tqdm
+import argparse
 
 # USE ENV conda activate augment_env
 
 # Important: Global dict do keep track of already augmented files
 augmented_images = {}
 
-def load_and_augment_image(image_path, labels_bboxes_relative, output_dir, image_name):
+def load_and_augment_image(image_path, labels_bboxes_relative, output_dir, image_name, augment_seed):
     # Load image
     image = imageio.imread(image_path)
 
-    # Convert relative bboxes to absolute
+    # Convert relative bboxes to absolute and transform coord system
     bbs = ia.BoundingBoxesOnImage([
-        ia.BoundingBox(x1=box[1]*image.shape[1], y1=(box[0])*image.shape[0],
-                       x2=box[3]*image.shape[1], y2=(box[2])*image.shape[0])
+        ia.BoundingBox(x1=box[0] * image.shape[1], y1=box[1] * image.shape[0],
+                   x2=box[2] * image.shape[1], y2=box[3] * image.shape[0])
         for _, _, box in labels_bboxes_relative
     ], shape=image.shape)
     split_labels = [(split, label) for split, label, _ in labels_bboxes_relative]
@@ -33,37 +34,40 @@ def load_and_augment_image(image_path, labels_bboxes_relative, output_dir, image
 
     # Define the augmentation sequence
     seq = iaa.Sequential([
-        iaa.Fliplr(0.5),  # Horizontal flips
-        iaa.Flipud(0.2),  # Vertical flips (if applicable)
-        iaa.Multiply((0.8, 1.2)),  # Random brightness changes
+        iaa.Fliplr(0.5, seed=augment_seed),  # Horizontal flips
+        iaa.Flipud(0.2, seed=augment_seed),  # Vertical flips (if applicable)
+        iaa.Multiply((0.8, 1.2), seed=augment_seed),  # Random brightness changes
         iaa.Affine(
             scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},  # Scaling
-            translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)}  # Translation
-        ),
-        iaa.AdditiveGaussianNoise(scale=(0, 0.05*255))  # Adding noise
-    ], random_order=True)
+            translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},  # Translation
+            seed=augment_seed),
+        iaa.AdditiveGaussianNoise(scale=(0, 0.05*255), seed=augment_seed)  # Adding noise
+    ], random_order=True, seed=augment_seed)
 
     # Apply augmentations
     image_aug, bbs_aug = seq(image=image, bounding_boxes=bbs)
 
     # Draw augmented bounding boxes on the image
     # image_with_bbs = bbs_aug.draw_on_image(image_aug, size=2, color=[0, 255, 0])
-    # Save augmented image with bounding boxes
     
     aug_image_path = os.path.join(output_dir, f'aug_{image_name}')
     if os.path.isfile(aug_image_path):
-        pass
+        # just overwrite old augmentations, it only takes one minute to augment all so no problem
+        imageio.imwrite(aug_image_path, image_aug)
         # this is not an error if it happens after the first file has been processed
         # print(f"Error: File {aug_image_path} already exists! Duplicate processing will lead to incorrect results!")
     else:
         imageio.imwrite(aug_image_path, image_aug)
 
-    # Convert augmented bboxes back to relative
-    # (You can save these to a file or use them as needed)
+
+    # Convert augmented bboxes back to relative, ensure x1 and y1 are non-negative, and cap x2 and y2 at upper bounds
     bbs_aug_relative = [
-        [f"{(bbox.y1 / image_aug.shape[0]):.4f}", f"{bbox.x1 / image_aug.shape[1]:.4f}",
-        f"{(bbox.y2 / image_aug.shape[0]):.4f}", f"{bbox.x2 / image_aug.shape[1]:.4f}"]
+        [f"{max(bbox.x1 / image_aug.shape[1], 0):.4f}",  # Ensure x1 is not negative
+        f"{max(bbox.y1 / image_aug.shape[0], 0):.4f}",  # Ensure y1 is not negative
+        f"{min(bbox.x2 / image_aug.shape[1], 1):.4f}",  # Ensure x2 does not exceed 1
+        f"{min(bbox.y2 / image_aug.shape[0], 1):.4f}"]  # Ensure y2 does not exceed 1
         for bbox in bbs_aug.bounding_boxes]
+
 
     augmented_labels_bboxes = [(split, label, bbox) for ((split, label), bbox) in zip(split_labels, bbs_aug_relative)]
     return augmented_labels_bboxes
@@ -78,7 +82,7 @@ def load_and_augment_image(image_path, labels_bboxes_relative, output_dir, image
 
 #for i, (image_path, bboxes_relative) in enumerate(zip(image_paths, bboxes_relative_all)):
 #    load_and_augment_image(image_path, bboxes_relative, output_dir, i)
-def process_fold(fold_number, input_dir, output_dir, cvprefix):
+def process_fold(fold_number, input_dir, output_dir, cvprefix, seed):
     input_file = os.path.join(input_dir, f'{cvprefix}_cv_fold_{fold_number}.csv')
     output_file = os.path.join(output_dir, f'aug_{cvprefix}_cv_fold_{fold_number}.csv')
     img_out_dir = '/home/alex/allImgs_extracted_smaller_aug'
@@ -112,7 +116,7 @@ def process_fold(fold_number, input_dir, output_dir, cvprefix):
 
             if image_path not in augmented_images:
                 # Image not augmented before, perform augmentation
-                augmented_label_bboxes = load_and_augment_image(image_path, labels_and_bboxes, img_out_dir, os.path.basename(image_path))
+                augmented_label_bboxes = load_and_augment_image(image_path, labels_and_bboxes, img_out_dir, os.path.basename(image_path), seed)
                 augmented_images[image_path] = augmented_label_bboxes
             else:
                 # Use previously augmented data
@@ -131,9 +135,20 @@ def process_fold(fold_number, input_dir, output_dir, cvprefix):
                 writer.writerow(eval_row)
             
                 
-# Example usage
-input_dir = 'annotations/cross_val'
-output_dir = 'annotations/cross_val'
-cv_prefix = '4650'
-for fold in range(5):
-    process_fold(fold, input_dir, output_dir, cv_prefix)                
+if __name__ == "__main__":
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='Script for creating augmentations for cross-validation folds.')
+    
+    # Add arguments with default values
+    parser.add_argument('--input_dir', type=str, default='annotations/cross_val', help='Input directory for annotations.')
+    parser.add_argument('--output_dir', type=str, default='annotations/cross_val', help='Output directory for augmented annotations.')
+    parser.add_argument('--cv_prefix', type=str, default='4904', help='Prefix for cross-validation identifier (Dataset image number).')
+    parser.add_argument('--folds', type=int, default=5, help='Number of cross-validation folds.')
+    parser.add_argument('--seed', type=int, default=42, help='Fixed seed for augmentation (default 42).')
+    
+    # Parse arguments
+    args = parser.parse_args()
+    
+    # Process each fold
+    for fold in range(args.folds):
+        process_fold(fold, args.input_dir, args.output_dir, args.cv_prefix, args.seed)
