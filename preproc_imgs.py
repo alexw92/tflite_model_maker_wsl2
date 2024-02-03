@@ -24,18 +24,23 @@ def resize_images_in_directory(input_directory, output_directory, target_dimensi
             with Image.open(input_path) as img:
                 # Check if resizing is necessary
                 if img.size[0] > target_dimension:
+                    # if os.path.exists(output_path):
+                    #     no_resizing = no_resizing + 1
+                    #     continue
+                    # else:
+                    if True:
                     #        print(img.size[0])
                     #        print(target_dimension)
                             # Calculate the other dimension to maintain the aspect ratio
-                            width_percent = (target_dimension / float(img.size[0]))
-                            target_height = int((float(img.size[1]) * float(width_percent)))
+                        width_percent = (target_dimension / float(img.size[0]))
+                        target_height = int((float(img.size[1]) * float(width_percent)))
 
                             # Resize the image while preserving the aspect ratio
-                            resized_img = img.resize((target_dimension, target_height), Image.ANTIALIAS)
+                        resized_img = img.resize((target_dimension, target_height), Image.ANTIALIAS)
 
                             # Save the resized image
-                            resized_img.save(output_path)
-                            resized_count = resized_count + 1
+                        resized_img.save(output_path)
+                        resized_count = resized_count + 1
                 else:
                     # If no resizing is needed, simply copy the image to the output directory
                     shutil.copy(input_path, output_path)
