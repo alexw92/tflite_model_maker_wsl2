@@ -1,3 +1,34 @@
+# Repo Overview
+
+### Preprocessing Scripts
+- ```convert_csv_to_mlflow.py```     - This script converts Label-Studio Annotations into csv
+- ```convert_pascal_to_googlecsv.py``` - Powerful script for converting the csv into expected format, dataset splitting and class merging
+- ```png_to_jpeg.py``` - Bulk convertion from png images to jpegs images
+- ```preproc_imgs.py``` - Shrinks images to a max width while keeping aspect ratio
+- ```normalize_csv.py``` - Normalizes bbox coordinates
+- ```remove_other.py```  - Removes label occurrences of desired class from the dataset
+- ```train_and_run_od_model.ipynb``` **Recommended for proprocessing:** Performs all preproc steps and starts training
+
+### Train scripts
+- ```do_inference.py``` - Uses CPU Delegate to perform inference using a tflite model and the label list
+- ```train_and_run_od_model.ipynb``` **Includes proprocessing:** Performs all preproc steps and starts training
+#### Cross Validation scripts
+- ```cross_validation_fold_creator.py``` - Splits a regular dataset to balanced (K-Stratfolds) Cross validation datasets ready for training
+- ```cross_valid_script.py``` - Uses the created CV datasets to train, performas eval and saves the tflite model
+
+### Augmentation & Annotation Inspection helper scripts
+- ```img_augmentation.py``` - Creates Augmented copies for a CV dataset for the train folds only
+- ```inference_ui.py``` - Can be used to compare inference results from different model versions
+- ```orig_anno_viewer.py``` - Used to inspect annotations in the label studio format
+- ```augment_viewer.py``` - Used to inspect annotations of shrinked images vs their augmented copies
+- ```bbox_draw_test.py``` - Augmentation test script for a single image and fixed augmentation seed
+
+### Legacy scripts (might not work as expected)
+- ```train_old.py```
+- ```train_cross_validation.ipynb```
+- ```do_inference_other.py```
+
+
 # tflite_model_maker_wsl2
 This shows how to set up tflite model maker on WSL2
 
