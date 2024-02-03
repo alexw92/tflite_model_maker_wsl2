@@ -1,6 +1,6 @@
 import os
 import csv
-from tkinter import Tk, Button, Label
+from tkinter import Tk, Button, Label, PhotoImage
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 class ImagePairViewer:
@@ -11,9 +11,15 @@ class ImagePairViewer:
         self.coord_conversion = False
         self.flip = True
         self.rotate = 0
+        self.wrong_augmented_coords = 0
 
         self.root = Tk()
         self.root.title("Image Viewer")
+    
+        # Bind keyboard shortcuts
+        self.root.bind("<Right>", lambda event: self.next_image())
+        self.root.bind("<Left>", lambda event: self.prev_image())
+                       
         self.setup_ui()
         self.display_current_image()
 
@@ -45,6 +51,13 @@ class ImagePairViewer:
         return data
 
     def setup_ui(self):
+        
+        self.fault_coords_label = Label(self.root, text=f"Photos with faulty coords: {self.wrong_augmented_coords}")
+        self.fault_coords_label.pack(side="top")
+        
+        self.my_label = Label(self.root, text=f"{self.current_index+1}/{len(self.images_data)}")
+        self.my_label.pack(side="top")
+        
         self.original_image_label = Label(self.root)
         self.original_image_label.pack(side="left")
 
@@ -83,10 +96,20 @@ class ImagePairViewer:
         orig = Image.open(img_path).rotate(self.rotate)
         aug = Image.open(aug_path).rotate(self.rotate)
         original_img = self.draw_boxes(orig, original_boxes, True, img_path, original_labels)
-        augmented_img = self.draw_boxes(aug, augmented_boxes, False, aug_path, augmented_labels)
+        try:
+            augmented_img = self.draw_boxes(aug, augmented_boxes, False, aug_path, augmented_labels)
+            augmented_photo = ImageTk.PhotoImage(augmented_img)
+        except Exception as e:
+            print(f"Error loading augmented image: {e}")
+            print(aug_path)
+            print(augmented_boxes)
+            self.wrong_augmented_coords += 1
+            self.fault_coords_label.config(text=f"Photos with faulty coords: {self.wrong_augmented_coords}")
+            # Option 1: Clear the augmented image label
+            augmented_photo = PhotoImage()    
 
         original_photo = ImageTk.PhotoImage(original_img)
-        augmented_photo = ImageTk.PhotoImage(augmented_img)
+        
 
         self.original_image_label.config(image=original_photo)
         self.original_image_label.image = original_photo  # Keep a reference!
@@ -99,17 +122,8 @@ class ImagePairViewer:
         draw = ImageDraw.Draw(img)
         img_width, img_height = img.size
         font_size = 20  # Set this to your preferred font size
-        font = ImageFont.truetype("DejaVuSans.ttf", font_size)        
-        if orig:
-            print("orig:")
-        else:
-            print("aug")   
-        print(img_path)
-        print(img_height)
-        print(img_width)
+        font = ImageFont.truetype("DejaVuSans.ttf", font_size)
         for box, label in zip(boxes, labels):
-            print(box)
-            print(label)
             # Assuming box coordinates are normalized (i.e., in the range [0, 1])
             if self.coord_conversion:
                 if self.flip:
@@ -148,10 +162,12 @@ class ImagePairViewer:
 
     def next_image(self):
         self.current_index += 1
+        self.my_label.config(text=f"{self.current_index+1}/{len(self.images_data)}")
         self.display_current_image()
 
     def prev_image(self):
         self.current_index = max(0, self.current_index - 1)
+        self.my_label.config(text=f"{self.current_index+1}/{len(self.images_data)}")
         self.display_current_image()
         
     def toggle_rotate(self):
@@ -176,6 +192,6 @@ class ImagePairViewer:
         self.display_current_image()
 
 if __name__ == "__main__":
-    csv_file = "/home/alex/tflite_model_maker_wsl2/annotations/cross_val/4904_cv_fold_0.csv"
+    csv_file = "/home/alex/tflite_model_maker_wsl2/annotations/cross_val/aug_4904_cv_fold_0.csv"
     viewer = ImagePairViewer(csv_file)
     viewer.root.mainloop()
