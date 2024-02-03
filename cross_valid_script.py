@@ -56,7 +56,7 @@ fold_files = ['4904_cv_fold_0.csv','4904_cv_fold_1.csv','4904_cv_fold_2.csv','49
 if no_other:
     fold_files_no_other = [f"{name}_no_other{ext}" for file in fold_files for name, ext in [os.path.splitext(file)]]
     fold_files = fold_files_no_other
-    no_other_infix = "_no_"
+    no_other_infix = "_no"
 for fold_i, fold_file in enumerate(fold_files):
     if use_augmented:
         fold_file = os.path.join(fold_dir,"aug_"+ fold_file)
@@ -65,8 +65,8 @@ for fold_i, fold_file in enumerate(fold_files):
     if only_folds is not None and len(only_folds)>0 and fold_i not in only_folds:
         print(f"Skipping fold {fold_i} because not in fold list {only_folds}")
         continue
-    custom_model_dir_name = 'model_'+"4904_plus_indiv"+no_other_infix#str(num_distinct_files)
-    model_dir = f"models/{model_name}/{custom_model_dir_name}{augmented_string_short}_e{str(epochs)}_b{str(batch_size)}_cvf_{fold_i}"
+    custom_model_dir_name = 'model_'+"4904_plus_indiv"#str(num_distinct_files)
+    model_dir = f"models/{model_name}/{custom_model_dir_name}{no_other_infix}{augmented_string_short}_e{str(epochs)}_b{str(batch_size)}_cvf_{fold_i}"
     print(f"training for fold number {fold_i} with file {fold_file}")
     #spec = model_spec.get('efficientdet_lite1')
     # check this url to check valid hparam values
