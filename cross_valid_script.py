@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser(description='Train a model with specified param
 parser.add_argument('--only_folds', '-f', nargs='+', type=int, default=[3], help='List of fold numbers to process (0 to 4)')
 parser.add_argument('--epochs', '-e', type=int, default=30, help='Number of epochs for training')
 parser.add_argument('--batch_size', '-b', type=int, default=20, help='Batch size for training')
-parser.add_argument('--no_other', '-no', action='store_false', help='Dont use merged label "other"')
+parser.add_argument('--no_other', '-no', action='store_true', help='Dont use merged label "other"')
 parser.add_argument('--use_augmented_datasets', '-aug', action='store_true', help='Also use augmented data for training"')
 parser.add_argument('--model_name', '-m', type=str, default='lite1', choices=['lite0', 'lite1', 'lite2', 'lite3'], help='Model name')
 
@@ -44,6 +44,7 @@ epochs = args.epochs
 batch_size = args.batch_size
 m_name = args.model_name
 no_other = args.no_other
+print(f"NO OTHER {no_other}")
 use_augmented = args.use_augmented_datasets
 model_name = 'efficientdet-' + m_name
 no_other_infix = ""
@@ -53,7 +54,8 @@ print(f"training with {str(epochs)} epochs, {str(batch_size)} batch_size, folds 
 fold_dir = "annotations/cross_val/"
 fold_files = ['4904_cv_fold_0.csv','4904_cv_fold_1.csv','4904_cv_fold_2.csv','4904_cv_fold_3.csv','4904_cv_fold_4.csv']
 if no_other:
-    fold_files = ['4904_cv_fold_0_no_other.csv','4904_cv_fold_1.csv','4904_cv_fold_2.csv','4904_cv_fold_3.csv','4904_cv_fold_4.csv']
+    fold_files_no_other = [f"{name}_no_other{ext}" for file in fold_files for name, ext in [os.path.splitext(file)]]
+    fold_files = fold_files_no_other
     no_other_infix = "_no_"
 for fold_i, fold_file in enumerate(fold_files):
     if use_augmented:
