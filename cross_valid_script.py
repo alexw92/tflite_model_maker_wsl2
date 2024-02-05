@@ -22,9 +22,10 @@ from absl import logging
 logging.set_verbosity(logging.ERROR)
 
 # Initialize TensorFlow with GPU memory growth
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if len(physical_devices) > 0:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# this significantly slows down training (40% slower per iteration)
+# physical_devices = tf.config.experimental.list_physical_devices('GPU')
+# if len(physical_devices) > 0:
+#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 # Define and parse command-line arguments
