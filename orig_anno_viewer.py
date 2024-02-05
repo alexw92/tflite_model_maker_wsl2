@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import Canvas, Button, Label
+from tkinter import Canvas, Button, Label, ttk
 from PIL import Image, ImageTk, ExifTags
 import csv
 import json
@@ -12,8 +12,10 @@ img_dir = '/home/alex/allImgs_extracted'
 
 # Creating a dictionary to hold the parsed data
 parsed_data = {}
+labels = set()
 rotation_counts = {i: 0 for i in range(1, 9)}
 current_rotation_filter = 0 
+grocery_filter = None
 
 def adjust_bounding_box_for_rotation(bounding_box, rotation):
     """
@@ -60,10 +62,21 @@ def update_image_list():
         filtered_paths = list(parsed_data.keys())
     else:
         filtered_paths = [path for path, data in parsed_data.items() if data['rotation'] == current_rotation_filter]
+    if grocery_filter is None:
+        pass
+    else:
+        filtered_paths = [
+            path
+            for path, data in parsed_data.items()
+            if any(grocery_filter == label['rectanglelabels'][0] for label in data['label'])
+        ]   
     
     # Update global image_paths and reset current_image_index if necessary
     global image_paths, current_image_index
     image_paths = filtered_paths
+    if grocery_filter:
+        print(f"Selected Grocery: {grocery_filter}")
+    print(f"Number of images: {len(image_paths)}")
     current_image_index = 0
     update_image(0) 
     
@@ -97,7 +110,6 @@ with open(csv_file_path_singles, mode='r', encoding='utf-8') as file:
 
         # Converting the label data from JSON string to a Python dictionary
         label_data = json.loads(row['label'])
-        
         # Storing the data in the dictionary
         parsed_data[image_path] = {
             "annotation_id": row["annotation_id"],
@@ -109,6 +121,9 @@ with open(csv_file_path_singles, mode='r', encoding='utf-8') as file:
             "updated_at": row["updated_at"],
             "rotation": rotation 
         }
+        for l in label_data:
+            labels.add(*l['rectanglelabels'])
+        
 
 image_paths = list(parsed_data.keys())
 current_image_index = 0
@@ -155,14 +170,25 @@ def update_image(direction):
     global current_index
     current_index += direction
     current_index = max(0, min(len(image_paths) - 1, current_index))
-    draw_image(canvas, image_paths[current_index], info_label)  # Pass 'info_label' here
+    draw_image(canvas, image_paths[current_index], info_label)
+    
+    
+def on_selection_change(event):
+    global grocery_filter
+    # Get the current selection
+    selected_option = combo_box.get()
+    if selected_option == "":
+        grocery_filter = None
+    else:
+        grocery_filter = selected_option
+    update_image_list()
 
 current_index = 0
 
 root = tk.Tk()
 root.title("Image Viewer")
 
-canvas = Canvas(root, width=800, height=1200)
+canvas = Canvas(root, width=800, height=1000)
 canvas.pack()
 
 info_label = Label(root, text="", wraplength=800)
@@ -180,6 +206,14 @@ next_button.pack(side="right")
 
 prev_button = Button(root, text="Previous", command=lambda: update_image(-1))
 prev_button.pack(side="left")
+
+# Dropdown list setup
+labels.add("")
+options = list(labels) # Example options
+options.sort()
+combo_box = ttk.Combobox(root, values=options)
+combo_box.pack()
+combo_box.bind("<<ComboboxSelected>>", on_selection_change)
 
 draw_image(canvas, image_paths[current_image_index], info_label)
 
