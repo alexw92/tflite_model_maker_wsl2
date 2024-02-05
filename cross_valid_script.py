@@ -30,6 +30,7 @@ if len(physical_devices) > 0:
 # Define and parse command-line arguments
 parser = argparse.ArgumentParser(description='Train a model with specified parameters.')
 parser.add_argument('--only_folds', '-f', nargs='+', type=int, default=[3], help='List of fold numbers to process (0 to 4)')
+parser.add_argument('--dataset', '-d', type=int, default=4904, help='Dataset identifier (default 4904 for 4904_cv_fold_x_.csv')
 parser.add_argument('--epochs', '-e', type=int, default=30, help='Number of epochs for training')
 parser.add_argument('--batch_size', '-b', type=int, default=20, help='Batch size for training')
 parser.add_argument('--no_other', '-no', action='store_true', help='Dont use merged label "other"')
@@ -41,6 +42,7 @@ args = parser.parse_args()
 # Using the arguments in the script
 only_folds = args.only_folds
 epochs = args.epochs
+dataset = args.dataset
 batch_size = args.batch_size
 m_name = args.model_name
 no_other = args.no_other
@@ -52,7 +54,7 @@ augmented_string = "using augmented data" if use_augmented else ""
 augmented_string_short = "_aug" if use_augmented else ""
 print(f"training with {str(epochs)} epochs, {str(batch_size)} batch_size, folds {only_folds} {augmented_string}")
 fold_dir = "annotations/cross_val/"
-fold_files = ['4904_cv_fold_0.csv','4904_cv_fold_1.csv','4904_cv_fold_2.csv','4904_cv_fold_3.csv','4904_cv_fold_4.csv']
+fold_files = [f'{dataset}_cv_fold_0.csv', f'{dataset}_cv_fold_1.csv', f'{dataset}_cv_fold_2.csv', f'{dataset}_cv_fold_3.csv', f'{dataset}_cv_fold_4.csv']
 if no_other:
     fold_files_no_other = [f"{name}_no_other{ext}" for file in fold_files for name, ext in [os.path.splitext(file)]]
     fold_files = fold_files_no_other
@@ -65,7 +67,7 @@ for fold_i, fold_file in enumerate(fold_files):
     if only_folds is not None and len(only_folds)>0 and fold_i not in only_folds:
         print(f"Skipping fold {fold_i} because not in fold list {only_folds}")
         continue
-    custom_model_dir_name = 'model_'+"4904_plus_indiv"#str(num_distinct_files)
+    custom_model_dir_name = 'model_'+str(dataset)+"_plus_indiv"#str(num_distinct_files)
     model_dir = f"models/{model_name}/{custom_model_dir_name}{no_other_infix}{augmented_string_short}_e{str(epochs)}_b{str(batch_size)}_cvf_{fold_i}"
     print(f"training for fold number {fold_i} with file {fold_file}")
     #spec = model_spec.get('efficientdet_lite1')
