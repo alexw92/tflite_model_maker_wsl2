@@ -46,7 +46,7 @@ def get_image_rotation(image_path):
         image = Image.open(image_path)
         exif = {ExifTags.TAGS[k]: v for k, v in image._getexif().items() if k in ExifTags.TAGS}
         rotation = exif.get('Orientation', None)
-    except (AttributeError, TypeError, KeyError):
+    except (AttributeError, TypeError, KeyError, FileNotFoundError):
         rotation = None
     return rotation
 
