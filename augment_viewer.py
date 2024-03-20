@@ -192,6 +192,6 @@ class ImagePairViewer:
         self.display_current_image()
 
 if __name__ == "__main__":
-    csv_file = "/home/alex/tflite_model_maker_wsl2/annotations/cross_val/aug_4904_cv_fold_0.csv"
+    csv_file = "/home/alex/tflite_model_maker_wsl2/annotations/cross_val/aug_5707_cv_fold_0_no_other.csv"
     viewer = ImagePairViewer(csv_file)
     viewer.root.mainloop()
